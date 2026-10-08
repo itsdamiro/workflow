@@ -17,3 +17,4 @@ Lightweight records for anything durable. Format: `TEMPLATE.md`. Standard: `docs
 | [011](011-concept-names-and-aliases.md) | Concept names: readable, with aliases that survive a rename | Accepted |
 | [012](012-decision-records-and-vault-conventions-travel-with-the-template.md) | Decision records and vault conventions travel with the template | Accepted |
 | [013](013-code-map-from-module-docstrings.md) | The code map is the committed Python module docstrings, copied unchanged | Accepted |
+| [014](014-stats-line-append-only-note.md) | The stats line is a row added to an append-only note, never rewritten | Accepted |

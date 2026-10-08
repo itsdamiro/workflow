@@ -19,7 +19,7 @@ Closing a slice already ends with a handoff (step 9 of `docs/CLOSING_A_SLICE.md`
 
 ## Decision
 
-`docs/sop/handoff.md` defines the steps; scripts do the deterministic ones; a model drafts the rest; the owner accepts. It runs after the slice's commits land, because the sync reads committed state. Commit and push stay the owner's call. Writing the ADR is not part of it: that happens before the code.
+`docs/sop/handoff.md` defines the steps; scripts do the deterministic ones; a model drafts the rest; the owner accepts. It runs when the slice's work is done and commits it first, because the sync reads committed state; running it is the owner's go-ahead to commit and push (see the amendment of 2026-10-08). Outside it, commit and push stay the owner's call. Writing the ADR is not part of it: that happens before the code.
 
 ## Consequences
 

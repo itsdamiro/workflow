@@ -66,4 +66,8 @@ Sympose's records have no `concepts`, so its cards link to none until they are b
 - **The note** is `<name> - Gotchas.md` under `Projects/<name>/`, `type: reference` (a new note type, added to the vocabulary with this amendment), `status: active`, `created` the day the file was first committed (never the sync date), `source` the file's path, `generated: true`. Its body is the file's text unchanged, then one footer line naming the hub, the path and the commit. A newly made hub links to it.
 - **The same rules as a card:** only a `generated: true` note is replaced, a name already used elsewhere in the vault is refused, a second run changes nothing. If the file is later removed from the branch, the old note stays (nothing is deleted); the owner removes it.
 - **Edge cases (from the code review):** `created` follows the file across a move (`git log --follow`, the earliest date). An entry at the path that is not a regular file (a directory, symlink or submodule) is refused with a reason, and the rest of the sync still runs. A file that starts with its own frontmatter is refused, since the note would carry two blocks. Links and tags inside the file are copied as written. An existing hub is the owner's and is never edited: when it lacks the link the report prints a `hint:` line, which does not change the exit code.
-- This closes item 9's deferral for the mirror. The code map and the stats line remain open.
+- This closes item 9's deferral for the mirror. The code map and the stats line remained open here; see the last amendment.
+
+## Amendment (2026-10-08): the code map and the stats line
+
+- Item 9's two remaining deferrals are decided elsewhere: the code map in ADR 013 (written by the sync) and the stats line in ADR 014 (written by `scripts/stats_line.py`, not by the sync, because it adds a row instead of rebuilding a note). The sync never touches the stats note.

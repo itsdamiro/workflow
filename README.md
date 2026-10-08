@@ -2,7 +2,7 @@
 
 A model-agnostic workflow for AI-assisted software projects: decisions, handoffs and a personal Obsidian vault of ideas, kept as plain markdown and small scripts.
 
-**Status: design phase.** The specification, the first decision records and the procedures are written; the vault scripts are not built yet. See "Usage" for what works today.
+**Status: working, still growing.** The specification, the decision records, the procedures and the vault scripts (the sync, the lint, the stats line) are written and tested. See "Usage" for what works today.
 
 ## What problem it solves
 
@@ -58,7 +58,15 @@ python3 scripts/vault_sync.py <project-path> <vault-path> --dry-run   # say what
 python3 scripts/vault_sync.py <project-path> <vault-path>            # write it
 ```
 
-Reads the project's committed `docs/decisions/` and writes read-only cards, a "Rejected ideas" note and a hub note under `<vault>/Projects/<name>/`. Only notes marked `generated: true` are ever replaced; nothing is deleted. See ADR 009.
+Reads the project's committed `docs/decisions/` and writes read-only cards, a "Rejected ideas" note and a hub note under `<vault>/Projects/<name>/`. It also copies a committed `docs/reference/GOTCHAS.md` and writes a code map, the first paragraph of each committed non-test Python file's module docstring (read with `ast`, never run). Only notes marked `generated: true` are ever replaced; nothing is deleted. See ADR 009 and ADR 013.
+
+### Add a stats row at the close
+
+```bash
+python3 scripts/stats_line.py <project-path> <vault-path> --context-tokens <N>   # N is optional
+```
+
+Adds one row to `<vault>/Projects/<name>/<name> - Stats.md`: the day, the commit, the commits since the last row and their first and last subject. Earlier rows are never rewritten, and a second run on the same commit changes nothing. `/handoff` runs it. See ADR 014.
 
 ### Check the vault
 
@@ -74,9 +82,8 @@ Decide first (a decision record), then build with tests, then close the slice wi
 
 ### Planned (not built)
 
-- The code map and the stats line for `vault_sync.py`.
-- `/handoff` as one command, and a reminder to use it when a session gets long (adapters for specific tools).
-- `adopt.sh` carrying the decision-record template and the procedures into new projects.
+- The Claude adapter that passes the session's context size to the stats line, so its last column stops showing a dash.
+- The `/handoff` command for tools other than Claude Code (today they follow `docs/sop/handoff.md`), and the pattern scan and checklist pane in the session guard.
 
 ## Where to read
 
