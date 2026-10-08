@@ -77,3 +77,9 @@ The first run reports the missing concept notes and whatever the owner's hand-wr
 ## Amendment (2026-10-08): concept aliases
 
 - ADR 011 adds the warning `old-concept-name` (an ADR names a concept by an alias listed on the concept note), a "did you mean" hint on `missing-concept`, and `duplicate-name` for an ambiguous alias. The sentence "every concept a card names has no note" above describes the first run only.
+
+## Amendment (2026-10-08): a topic is not a concept
+
+- **A new warning, `narrow-topic`.** A `topic/` tag used on two or more decision cards that all name the same single concept is reported, with the concept and the card count. A topic is a question to filter by and cuts across concepts; one that spans a single concept is that concept's note again. A topic used on one card, or on cards naming two or more concepts, is not reported.
+- **Topics stay free-form** (the decision above is unchanged: no closed list). What changes is the guidance and who writes them: the record's author picks from the list in `Tags.md`, and the shape check (ADR 012 amendment) refuses a record with no topic or with one that repeats its own concept.
+- **Accepted** by the owner on 2026-10-08, in chat, after a discussion of the options (concept-derived topics, cross-cutting topics, none). Sympose's 78 records were tagged with 11 cross-cutting topics at the same time.

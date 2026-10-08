@@ -6,7 +6,7 @@ projects: [workflow]
 concepts: [Handoff]
 amends: []
 supersedes: []
-tags: [type/decision, status/accepted, project/workflow, topic/handoff]
+tags: [type/decision, status/accepted, project/workflow, topic/vault, topic/patterns]
 ---
 
 # 005 — One `/handoff` procedure closes a slice

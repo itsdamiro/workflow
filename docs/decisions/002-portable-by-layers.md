@@ -6,7 +6,7 @@ projects: [workflow]
 concepts: [Portability]
 amends: []
 supersedes: []
-tags: [type/decision, status/accepted, project/workflow, topic/portability]
+tags: [type/decision, status/accepted, project/workflow, topic/architecture]
 ---
 
 # 002 — Portable by layers: files and scripts, procedures, optional adapters

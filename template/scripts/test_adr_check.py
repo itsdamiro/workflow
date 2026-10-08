@@ -16,7 +16,7 @@ projects: [demo]
 concepts: [Session length, Pattern scan]
 amends: []
 supersedes: []
-tags: [type/decision, status/accepted, project/demo]
+tags: [type/decision, status/accepted, project/demo, topic/cost]
 ---
 
 # 001 — A good record
@@ -121,6 +121,20 @@ class Shape(Case):
         self.assertTrue(self.has("tags lack type/decision"))
         self.put("001-a-good-record.md", GOOD.replace("status/accepted", "status/proposed"))
         self.assertTrue(self.has("tags lack status/accepted"))
+
+    def test_a_topic_tag_is_required(self):
+        self.put("001-a-good-record.md", GOOD.replace(", topic/cost", ""))
+        self.assertTrue(self.has("no topic/ tag"))
+
+    def test_a_topic_that_only_repeats_a_concept_is_refused(self):
+        self.put("001-a-good-record.md", GOOD.replace("topic/cost", "topic/session-length"))
+        self.assertTrue(self.has("topic/session-length only repeats a concept"))
+        self.put("001-a-good-record.md", GOOD.replace("topic/cost", "topic/pattern-scan, topic/cost"))
+        self.assertTrue(self.has("topic/pattern-scan only repeats a concept"))
+
+    def test_a_topic_equal_to_another_records_concept_is_fine(self):
+        self.put("001-a-good-record.md", GOOD.replace("topic/cost", "topic/handoff"))
+        self.assertEqual(self.found(), [])
 
     def test_the_summary_line(self):
         self.put("001-a-good-record.md", GOOD.replace("> **Summary.** What, why, cost.", "Just text."))

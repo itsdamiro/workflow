@@ -6,7 +6,7 @@ projects: [workflow]
 concepts: [Intake]
 amends: [001]
 supersedes: []
-tags: [type/decision, status/accepted, project/workflow, topic/intake]
+tags: [type/decision, status/accepted, project/workflow, topic/vault]
 ---
 
 # 007 — Graphify is not part of the core; try it later for outside sources

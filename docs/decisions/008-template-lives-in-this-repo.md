@@ -6,7 +6,7 @@ projects: [workflow]
 concepts: [Portability]
 amends: [002]
 supersedes: []
-tags: [type/decision, status/accepted, project/workflow, topic/portability]
+tags: [type/decision, status/accepted, project/workflow, topic/architecture]
 ---
 
 # 008 — The project template and its scripts live in this repository

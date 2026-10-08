@@ -566,6 +566,36 @@ class Nudges(VaultCase):
         self.assertNotIn("N5.md", detail)
 
 
+class NarrowTopics(VaultCase):
+    """A topic is a question that cuts across concepts; one that spans a single concept is the concept note again."""
+
+    def decision(self, name, concept, topic):
+        self.write("Concepts/%s.md" % concept, fm(type="concept", tags="[type/concept, status/draft, topic/mind]"))
+        self.write("Projects/alpha/%s.md" % name, fm(
+            type="decision", concepts='["[[%s]]"]' % concept, tags="[type/decision, status/draft, topic/%s]" % topic))
+
+    def test_a_topic_over_one_concept_is_a_warning(self):
+        self.decision("D1", "Cost", "money")
+        self.decision("D2", "Cost", "money")
+        found = self.hits("narrow-topic")
+        self.assertEqual([(f.path, f.severity) for f in found], [("Tags.md", "warning")])
+        self.assertIn("topic/money spans one concept (cost) over 2 decisions", found[0].detail)
+
+    def test_a_topic_over_two_concepts_is_fine(self):
+        self.decision("D1", "Cost", "money")
+        self.decision("D2", "Speed", "money")
+        self.assertEqual(self.hits("narrow-topic"), [])
+
+    def test_one_card_cannot_show_a_topic_is_narrow(self):
+        self.decision("D1", "Cost", "money")
+        self.assertEqual(self.hits("narrow-topic"), [])
+
+    def test_only_decision_cards_count(self):
+        self.write("Concepts/Cost.md", fm(type="concept", tags="[type/concept, status/draft, topic/money]"))
+        self.write("Concepts/Speed.md", fm(type="concept", tags="[type/concept, status/draft, topic/money]"))
+        self.assertEqual(self.hits("narrow-topic"), [])
+
+
 class ConceptAliases(VaultCase):
     """ADR 011: a concept note may list old names under aliases; a name that matches nothing gets a hint."""
 
