@@ -1,12 +1,12 @@
 ---
 type: decision
-status: proposed
+status: accepted
 date: 2026-10-08
 projects: [workflow]
 concepts: [intake]
 amends: [001]
 supersedes: []
-tags: [type/decision, status/proposed, project/workflow, topic/intake]
+tags: [type/decision, status/accepted, project/workflow, topic/intake]
 ---
 
 # 007 — Graphify is not part of the core; try it later for outside sources

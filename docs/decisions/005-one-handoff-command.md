@@ -1,12 +1,12 @@
 ---
 type: decision
-status: proposed
+status: accepted
 date: 2026-10-08
 projects: [workflow]
 concepts: [handoff]
 amends: []
 supersedes: []
-tags: [type/decision, status/proposed, project/workflow, topic/handoff]
+tags: [type/decision, status/accepted, project/workflow, topic/handoff]
 ---
 
 # 005 — One `/handoff` procedure closes a slice

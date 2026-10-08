@@ -12,7 +12,7 @@ tags: [type/decision, status/accepted, project/workflow, topic/vault]
 # 004 — Vault notes: names, frontmatter, links, tags
 
 > **Summary.** Cards are named `NNN - Sentence.md` from the repo slug; every note has frontmatter and at least one link;
-> tags are namespaced and come from a controlled list. Accepted except the tombstone and redirect rules, which are proposed.
+> tags are namespaced and come from a controlled list.
 
 ## Context
 
@@ -37,8 +37,8 @@ fields and tags.
 
 ## Not yet decided
 
-Tombstones and redirect notes are proposed, not yet approved. Whether structural tags add noise to Sympose's shared-tag
-connections is untested. Tag and list syntax must be checked against Sympose's parser with sample notes.
+The tombstone and redirect rules were accepted on 2026-10-08. Still untested: whether structural tags add noise to Sympose's shared-tag
+connections is untested. Tag and list syntax must be checked against Sympose's parser with sample notes (item 6 of the build order).
 
 ## Alternatives rejected
 
