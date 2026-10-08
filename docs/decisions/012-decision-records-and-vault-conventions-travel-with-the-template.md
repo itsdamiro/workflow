@@ -46,3 +46,10 @@ A new project writes records the vault can connect from the first one, and a pro
 ## Amendment (2026-10-08): accepted
 
 - **Accepted** by the owner on 2026-10-08, with these answers: the shape check is a gate; the conventions are a page of their own (`docs/VAULT_CONVENTIONS.md`); the template comes first and Sympose is the next step, not part of this slice.
+
+## Amendment (2026-10-08): how Sympose's records were backfilled
+
+- **Dates.** A record whose text gives no date got the date of the git commit that added its file (37 of 78), which is when the file appeared and not necessarily when the choice was made. A "Proposed YYYY-MM-DD" in the status line wins over a later "built" date.
+- **Amends and supersedes** were read from the status line's "Amends" and "Replaces" sentences and cut off at "builds on" and "reverses"; they were not read from the body.
+- **Summaries were drafted by a model** from each record and written in at the owner's word, in bulk, without a line-by-line review. A summary is edited in the project's record and then synced; an edit made to a generated vault card is replaced by the next sync. A separate reader then checked every summary and field against its record and found errors in about a third of them (summaries that a later amendment in the same record had overturned, and missing `amends`); those were fixed, so a bulk draft is not to be trusted unchecked.
+- **The gate starts at record 1** in Sympose, because every record now has the full shape.
