@@ -13,3 +13,4 @@ Lightweight records for anything durable. Format: `TEMPLATE.md`. Standard: `docs
 | [007](007-graphify-optional-later.md) | Graphify is not part of the core; try it later for outside sources | Accepted |
 | [008](008-template-lives-in-this-repo.md) | The project template and its scripts live in this repository | Accepted |
 | [009](009-vault-sync-rules.md) | `vault_sync.py`: what it reads, what it writes, and when it refuses | Accepted |
+| [010](010-vault-lint-rules.md) | `vault_lint.py`: what it checks, and what it never does | Accepted |

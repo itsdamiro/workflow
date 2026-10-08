@@ -69,11 +69,11 @@ tags: [type/decision, status/accepted, project/workflow]
 ---
 ```
 
-**Links.** Every note links to at least one other. Cards link to their project hub, their concepts and what they amend. An idea links to at least one project or concept. `Inbox/` notes may stay unlinked for a set number of days. Links in frontmatter must be quoted; the main links go in the body.
+**Links.** Every note should link to at least one other, and be linked from one (the lint warns; it does not fail). Cards link to their project hub, their concepts and what they amend. An idea links to at least one project or concept. `Inbox/` notes may stay unlinked for a set number of days. Links in frontmatter must be quoted; the main links go in the body.
 
 **Tags.** Lowercase, namespaced, kebab-case: `type/`, `status/`, `project/`, `topic/`, `lang/`, `source/`. The sync adds the structural tags from the fields; the owner adds `topic/` tags. A `Tags` note lists the allowed namespaces and the lint rejects others. Rule: if you would write about it, it is a concept; if you would only filter or count by it, it is a tag.
 
-**Lint** (a failing lint is reported, never silently fixed): required fields present; every link resolves; no orphans outside `Inbox/`; every tag is in the list; every concept used is a note in `Concepts/`.
+**Lint** (`scripts/vault_lint.py`, ADR 010; a failing lint is reported, never silently fixed). Errors, which fail the run: unreadable or missing frontmatter fields, an unknown type or status, a link that does not resolve, a tag outside the vocabulary, two notes with one name, a concept with no note in `Concepts/`. Warnings, which nudge and never fail the run: a note with no links, an orphan outside `Inbox/`, a note with no tags (or no `topic/` tag), a `topic/` tag neither listed in `Tags.md` nor a note, a generated card with no date.
 
 ## 5. ADR format
 
