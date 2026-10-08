@@ -31,6 +31,7 @@ coding-standards/
 │   ├── decisions/TEMPLATE.md        the decision-record template (frontmatter, summary, sections)
 │   ├── sop/write-an-adr.md          write a decision record before the code
 │   ├── sop/rename-a-concept.md      name a concept, and rename one without breaking records
+│   ├── sop/check-a-handoff.md       test a handoff with a fresh reader (a copy of docs/sop/check-a-handoff.md)
 │   └── reference/GOTCHAS.template.md  → docs/reference/GOTCHAS.md: traps and recipes (the durable half)
 ├── scripts/
 │   ├── gates (+ gates.conf.template)  every gate, one line each, failures show their last lines

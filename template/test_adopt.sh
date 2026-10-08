@@ -17,7 +17,7 @@ grep -q 'CLAUDE.md' "$proj/.gitignore"; ok $? "the no-trace block is in .gitigno
 grep -q md_wrap_check "$proj/scripts/gates.conf"; ok $? "the wrap checker is a gate in the project's list"
 [ -x "$proj/scripts/adr_check.py" ]; ok $? "the decision-record shape check is installed and executable"
 grep -q '^adr-check .*adr_check.py' "$proj/scripts/gates.conf"; ok $? "the shape check is a gate in the project's list"
-for f in docs/VAULT_CONVENTIONS.md docs/decisions/TEMPLATE.md docs/sop/write-an-adr.md docs/sop/rename-a-concept.md; do
+for f in docs/VAULT_CONVENTIONS.md docs/decisions/TEMPLATE.md docs/sop/write-an-adr.md docs/sop/rename-a-concept.md docs/sop/check-a-handoff.md; do
   [ -s "$proj/$f" ]; ok $? "$f is installed"
 done
 grep -q VAULT_CONVENTIONS "$proj/CLAUDE.md"; ok $? "the contents page points at the conventions"

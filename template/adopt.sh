@@ -25,6 +25,7 @@ pairs=(
   "docs/decisions/TEMPLATE.md|docs/decisions/TEMPLATE.md"
   "docs/sop/write-an-adr.md|docs/sop/write-an-adr.md"
   "docs/sop/rename-a-concept.md|docs/sop/rename-a-concept.md"
+  "docs/sop/check-a-handoff.md|docs/sop/check-a-handoff.md"
   "scripts/gates|scripts/gates"
   "scripts/gates.conf.template|scripts/gates.conf"
   "scripts/mutate.py|scripts/mutate.py"
