@@ -26,7 +26,8 @@
 ### `gates` used to skip a last line with no trailing newline
 - **Symptom:** a failing gate at the end of `gates.conf` was never run, and the script exited 0.
 - **Cause:** `read` returns failure on a final line without a newline. Fixed in `template/scripts/gates`; projects
-  adopted earlier keep the old copy until they are updated (`adopt.sh --check` shows `differs`).
+  adopted earlier keep the old copy until they are updated (`adopt.sh --check` shows `differs`). `template/scripts/test_gates.sh`
+  guards it (a gate here); it fails on the old script. Sympose was updated 2026-10-08.
 - **Do this:** update the project's `scripts/gates` from the template.
 
 ### `echo ====…` fails in zsh
