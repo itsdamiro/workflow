@@ -131,8 +131,8 @@ Commit and push stay the owner's call. Writing the ADR itself happens before the
 
 Optional adapter (a Claude Code mod). It shows context size in the status line, shows a band with a "Run /handoff"
 button at a soft threshold (default 150k tokens) and a stronger one at a hard threshold (default 200k). It never blocks.
-It may also show rate-limit windows and the closing checklist. Not yet verified on the desktop app. The hard git rules
-stay in a hook, not in the mod.
+It may also show rate-limit windows and the closing checklist. Prototype in `adapters/claude/session-guard/`: validated, not yet checked drawing on
+the desktop app. The hard git rules stay in a hook, not in the mod.
 
 ## 9. Project types
 

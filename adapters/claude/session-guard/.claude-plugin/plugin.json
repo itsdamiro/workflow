@@ -1,0 +1,12 @@
+{
+  "name": "session-guard",
+  "version": "0.1.1",
+  "description": "Shows the context size and rate-limit use, and offers to close the slice when a session gets long. Advisory: never blocks.",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "softTokens": { "type": "number", "title": "Soft limit (tokens)", "description": "Context size at which the band offers to close the slice.", "default": 150000 },
+    "hardTokens": { "type": "number", "title": "Hard limit (tokens)", "description": "Context size at which the reminder turns urgent.", "default": 200000 },
+    "limitPercent": { "type": "number", "title": "Rate-limit warning (%)", "description": "Warn when a rate-limit window is this full.", "default": 80 },
+    "handoffPrompt": { "type": "string", "title": "Prompt the button sends", "description": "What the Close-slice button submits, in the owner's name.", "default": "Close this slice: follow docs/CLOSING_A_SLICE.md, then rewrite docs/HANDOFF.md and check it with a fresh reader. Do not commit or push." }
+  }
+}
