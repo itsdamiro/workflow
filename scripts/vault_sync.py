@@ -24,6 +24,7 @@ import tempfile
 
 RECORD = re.compile(r"^(\d{3})-(.+)\.md$")
 INDEX_ROW = re.compile(r"^\|\s*\[(\d{3})\]\([^)]*\)\s*\|.*\|\s*([^|]+?)\s*\|\s*$")
+ISO_DAY = re.compile(r"\d{4}-\d{2}-\d{2}")
 UNSAFE = re.compile(r'[\\/:*?"<>|#^\[\]]')
 STATUSES = {"proposed", "accepted", "superseded", "removed"}
 SUMMARY_MAX, BULLET_MAX, NAME_MAX = 600, 300, 80
@@ -263,8 +264,9 @@ def render_redirect(number: int, project: str, target: str) -> str:
 
 
 def render_rejected(project: str, records: list[dict], names: dict[int, str]) -> str:
-    fields = [("type", "index"), ("status", "active"), ("projects", flow([project])), ("generated", "true"),
-              ("tags", tags("index", "active", project))]
+    days = [r["date"] for r in records if ISO_DAY.fullmatch(r["date"])]
+    fields = [("type", "index"), ("status", "active")] + ([("created", min(days))] if days else []) + [
+        ("projects", flow([project])), ("generated", "true"), ("tags", tags("index", "active", project))]
     out = frontmatter(fields) + f"\n# {project} — Rejected ideas\n\nAlternatives that decision records turned down, with the record that did it. Back to [[{project}]].\n"
     for rec in sorted(records, key=lambda r: r["number"]):
         if rec["rejected"] and rec["number"] in names:

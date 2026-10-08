@@ -192,6 +192,26 @@ class Cards(Base):
         self.assertLess(text.index("ADR 001"), text.index("ADR 002"))
         self.assertIn("type: index", text)
 
+    def rejected(self):
+        return read(os.path.join(self.vault, "Projects", "demo", "demo - Rejected ideas.md"))
+
+    def test_the_rejected_note_is_created_on_the_earliest_record_date(self):
+        put(self.repo, "docs/decisions/004-earlier.md", "---\ndate: 2026-01-02\n---\n# 004 — Earlier\n\n## Alternatives rejected\n\n- **X.** No.\n")
+        put(self.repo, "docs/decisions/005-junk-date.md", "---\ndate: 2025-soon\n---\n# 005 — Junk\n")
+        commit(self.repo)
+        self.sync()
+        self.assertIn("\ncreated: 2026-01-02\n", self.rejected())
+
+    def test_the_rejected_note_has_no_created_when_no_record_has_a_valid_date(self):
+        records = [{"number": 1, "date": "", "rejected": []}, {"number": 2, "date": "soon", "rejected": []}]
+        self.assertNotIn("created:", v.render_rejected("demo", records, {}))
+        self.assertIn("\ncreated: 2026-03-04\n", v.render_rejected("demo", records + [{"number": 3, "date": "2026-03-04", "rejected": []}], {}))
+
+    def test_the_rejected_note_is_unchanged_by_a_second_sync(self):
+        self.sync()
+        report = self.sync()
+        self.assertEqual(report.updated, [])
+
     def test_a_record_in_a_nested_folder_is_not_a_record(self):
         put(self.repo, "docs/decisions/archive/009-old.md", "# 009 — Old\n")
         commit(self.repo)

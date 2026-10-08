@@ -55,3 +55,7 @@ Sympose's records have no `concepts`, so its cards link to none until they are b
 - **A rejected alternative** is the whole bullet, joined across the lines it wraps over (a blank line ends it), because the records wrap their lines and a first line alone stops mid-sentence.
 - **Two note types are added** to the vocabulary: `index` (the Rejected-ideas note) and `redirect`.
 - Built and checked: 36 tests, 52 of 52 mutants caught; on Sympose's 78 real records, 153 links resolve, no status is unknown, and a second run changes nothing.
+
+## Amendment (2026-10-08): a date on the Rejected-ideas note
+
+- The "Rejected ideas" note now carries `created`, the earliest valid `YYYY-MM-DD` date among the project's records, so the lint no longer warns about it and a second sync still leaves it unchanged. It is taken from the records, never from the day the sync runs. With no valid date among them the field is left out, as on a card.
