@@ -45,7 +45,7 @@ An adapter may add convenience (a reminder, a button). It may not add behaviour 
 The central vault is `garden`, started empty on 2026-10-08. It is local with no remote; it is to be git-initialised for history (not yet done).
 
 ```
-Projects/<name>/   <name>.md (hub, yours), decisions/, Rejected ideas.md, Code map.md, GOTCHAS.md, stats
+Projects/<name>/   <name>.md (hub, yours), decisions/, <name> - Rejected ideas.md, later: Code map, GOTCHAS, stats
 Concepts/          one note per idea you name (the vocabulary)
 Patterns/          reusable building blocks, each citing code and any ADR
 Ideas/             your own notes
@@ -68,7 +68,7 @@ tombstone card (status removed, date, one line why) so links to it still resolve
 
 ```yaml
 ---
-type: decision          # decision | concept | pattern | idea | source | project | folder-definition
+type: decision          # decision | concept | pattern | idea | source | project | folder-definition | index | redirect
 status: accepted
 created: 2026-10-08
 projects: [workflow]
@@ -97,7 +97,7 @@ dated amendments (`## Amendment (date): title`). New ADRs add frontmatter (`type
 `concepts`, `amends`, `supersedes`) and a three-line summary at the top. `governs:` (paths of the code an ADR explains,
 checked by a gate) is optional and not yet decided. See `docs/decisions/TEMPLATE.md`.
 
-## 6. Extraction (`vault-sync`)
+## 6. Extraction (`scripts/vault_sync.py`)
 
 A script, no model, idempotent. It reads the committed state of each project's default branch (so unmerged drafts are
 not published) and writes into `Projects/<name>/`.
@@ -105,10 +105,12 @@ not published) and writes into `Projects/<name>/`.
 | Source | Output | How |
 |---|---|---|
 | each ADR | a decision card: title, status, summary, amendments, rejected alternatives, link back | parsed from the headings |
-| every "Alternatives rejected" | `Rejected ideas.md` | parsed |
+| every "Alternatives rejected" | `<name> - Rejected ideas.md` | parsed |
 | `docs/reference/GOTCHAS.md` | mirrored | copied |
-| module docstrings | `Code map.md` | Python first; other languages add an extractor when a project needs one |
-| ADR `concepts` fields | notes in `Concepts/` listing the cards that carry them | derived |
+| module docstrings | `Code map.md` | Python first; a later version; other languages add an extractor when a project needs one |
+
+The first version (ADR 009) does the cards and the Rejected-ideas note only. Concept notes are the owner's: the cards that
+name a concept appear in its backlinks. The `GOTCHAS` mirror waits on a decision about local-only files.
 
 The script only overwrites notes marked `generated: true`. It never touches a note without the marker.
 

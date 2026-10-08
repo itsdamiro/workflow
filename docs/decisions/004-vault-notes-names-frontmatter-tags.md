@@ -35,10 +35,11 @@ reads frontmatter, tags and links (including quoted links in frontmatter).
 A lint enforces all of the above. Statistics (ADRs per week, amendment rate, topics shared by two projects) come from
 fields and tags.
 
-## Not yet decided
+## Checked, and not yet checked
 
-The tombstone and redirect rules were accepted on 2026-10-08. Still untested: whether structural tags add noise to Sympose's shared-tag
-connections is untested. Tag and list syntax must be checked against Sympose's parser with sample notes (item 6 of the build order).
+The tombstone and redirect rules were accepted on 2026-10-08. Checked the same day with Sympose's own code: the frontmatter,
+flow-list tags, quoted links and `[[name|alias]]` links all parse and resolve. Not yet checked: whether structural tags add
+noise to Sympose's shared-tag connections.
 
 ## Alternatives rejected
 

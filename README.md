@@ -59,6 +59,16 @@ hook that refuses an attribution trailer, whatever tool made the commit. Then:
 4. Add the section of `template/CONTRIBUTING.snippet.md` to the project's `CONTRIBUTING.md`, with your own identity.
 5. Write the first decision record from `docs/decisions/TEMPLATE.md` before the first code.
 
+### Put a project's decisions in the vault
+
+```bash
+python3 scripts/vault_sync.py <project-path> <vault-path> --dry-run   # say what would be written
+python3 scripts/vault_sync.py <project-path> <vault-path>            # write it
+```
+
+Reads the project's committed `docs/decisions/` and writes read-only cards, a "Rejected ideas" note and a hub note under
+`<vault>/Projects/<name>/`. Only notes marked `generated: true` are ever replaced; nothing is deleted. See ADR 009.
+
 ### Each slice of work
 
 Decide first (a decision record), then build with tests, then close the slice with `docs/CLOSING_A_SLICE.md`. The last
@@ -67,7 +77,8 @@ step is the handoff: tell any assistant "follow `docs/sop/handoff.md`", then sta
 
 ### Planned (not built)
 
-- `scripts/vault-sync` and `scripts/vault-lint`: turn each project's decision records into linked notes in the vault.
+- `scripts/vault-lint`: check the vault for broken links, orphans, unknown tags and missing fields.
+- The code map, the `GOTCHAS` mirror and the stats line for `vault_sync.py`.
 - `/handoff` as one command, and a reminder to use it when a session gets long (adapters for specific tools).
 - `adopt.sh` carrying the decision-record template and the procedures into new projects.
 

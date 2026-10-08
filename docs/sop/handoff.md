@@ -7,8 +7,10 @@ vault path, and the owner. Scripts marked *planned* are not built yet: do that s
 
 1. **Check the ground.** The slice's work is committed (`git status -sb` is clean apart from local-only files) and
    `scripts/gates` passes. If not, stop and tell the owner; this is `docs/CLOSING_A_SLICE.md` steps 1 to 8.
-2. **Sync the vault.** Run `scripts/vault-sync <project> <vault>` (*planned*). It writes only notes marked
-   `generated: true`. Record what it created, changed and refused.
+2. **Sync the vault.** Run `python3 scripts/vault_sync.py <project-path> <vault-path> --dry-run`, read what it would do, then
+   run it without `--dry-run`. It reads the project's committed decision records and writes only notes marked
+   `generated: true`. Record what it created, changed and refused; a refusal is a name clash or a hand-written note in the
+   way, and is for the owner to settle, never to force.
 3. **Run the lints.** `scripts/vault-lint <vault>` (*planned*): required fields, links that resolve, orphans, tags,
    concepts. List every failure. Do not fix a note the script did not generate without asking.
 4. **Scan the slice's diff for patterns.** Read the diff from the last handoff to now (`git diff <ref>..HEAD`), not the
