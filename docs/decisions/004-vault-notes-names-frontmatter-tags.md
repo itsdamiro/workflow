@@ -3,7 +3,7 @@ type: decision
 status: accepted
 date: 2026-10-08
 projects: [workflow]
-concepts: [vault-conventions]
+concepts: [Vault conventions]
 amends: [003]
 supersedes: []
 tags: [type/decision, status/accepted, project/workflow, topic/vault]

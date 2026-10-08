@@ -3,7 +3,7 @@ type: decision
 status: accepted
 date: 2026-10-08
 projects: [workflow]
-concepts: [handoff]
+concepts: [Handoff]
 amends: []
 supersedes: []
 tags: [type/decision, status/accepted, project/workflow, topic/handoff]

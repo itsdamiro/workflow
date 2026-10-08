@@ -3,7 +3,7 @@ type: decision
 status: accepted
 date: 2026-10-08
 projects: [workflow]
-concepts: [intake]
+concepts: [Intake]
 amends: [001]
 supersedes: []
 tags: [type/decision, status/accepted, project/workflow, topic/intake]
