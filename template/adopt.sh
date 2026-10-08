@@ -21,10 +21,15 @@ pairs=(
   "docs/CLOSING_A_SLICE.md|docs/CLOSING_A_SLICE.md"
   "docs/HANDOFF.template.md|docs/HANDOFF.md"
   "docs/reference/GOTCHAS.template.md|docs/reference/GOTCHAS.md"
+  "docs/VAULT_CONVENTIONS.md|docs/VAULT_CONVENTIONS.md"
+  "docs/decisions/TEMPLATE.md|docs/decisions/TEMPLATE.md"
+  "docs/sop/write-an-adr.md|docs/sop/write-an-adr.md"
+  "docs/sop/rename-a-concept.md|docs/sop/rename-a-concept.md"
   "scripts/gates|scripts/gates"
   "scripts/gates.conf.template|scripts/gates.conf"
   "scripts/mutate.py|scripts/mutate.py"
   "scripts/md_wrap_check.py|scripts/md_wrap_check.py"
+  "scripts/adr_check.py|scripts/adr_check.py"
 )
 [ "$gemini" = 1 ] && pairs+=("GEMINI.template.md|GEMINI.md")
 
@@ -38,7 +43,7 @@ for pair in "${pairs[@]}"; do
   else
     mkdir -p "$(dirname "$dst")"; cp "$src" "$dst"
     case "$dst" in */CLAUDE.md|*/GEMINI.md) sed -i.bak "s/\[PROJECT NAME\]/$(printf '%s' "$name" | sed 's/[\/&]/\\&/g')/" "$dst" && rm -f "$dst.bak" ;; esac
-    case "$dst" in */scripts/gates|*/scripts/mutate.py|*/scripts/md_wrap_check.py) chmod +x "$dst" ;; esac
+    case "$dst" in */scripts/gates|*/scripts/mutate.py|*/scripts/md_wrap_check.py|*/scripts/adr_check.py) chmod +x "$dst" ;; esac
     echo "  created  ${pair##*|}"
   fi
 done
@@ -55,6 +60,11 @@ if [ -n "$hooksdir" ]; then
   else
     mkdir -p "$hooksdir"; cp "$src" "$dst"; chmod +x "$dst"; echo "  created  git hook commit-msg"
   fi
+fi
+
+# a gates.conf that already exists is never edited, so say if it lacks the decision-record shape check
+if [ -e "$proj/scripts/gates.conf" ] && ! grep -qs '^[[:space:]]*adr-check[[:space:]]*|' "$proj/scripts/gates.conf"; then
+  echo "  note     scripts/gates.conf has no adr-check gate: add  adr-check | . | python3 scripts/adr_check.py --from NNN"
 fi
 
 [ "$check" = 1 ] && exit 0

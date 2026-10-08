@@ -79,7 +79,7 @@ tags: [type/decision, status/accepted, project/workflow]
 
 ## 5. ADR format
 
-ADRs stay in each project's `docs/decisions/`, numbered, with Context, Decision, Consequences, Alternatives rejected and dated amendments (`## Amendment (date): title`). New ADRs add frontmatter (`type`, `status`, `date`, `projects`, `concepts`, `amends`, `supersedes`) and a three-line summary at the top. `governs:` (paths of the code an ADR explains, checked by a gate) is optional and not yet decided. See `docs/decisions/TEMPLATE.md`.
+ADRs stay in each project's `docs/decisions/`, numbered, with Context, Decision, Consequences, Alternatives rejected and dated amendments (`## Amendment (date): title`). New ADRs add frontmatter (`type`, `status`, `date`, `projects`, `concepts`, `amends`, `supersedes`) and a three-line summary at the top. `governs:` (paths of the code an ADR explains, checked by a gate) is optional and not yet decided. See `docs/decisions/TEMPLATE.md`, `docs/VAULT_CONVENTIONS.md` and the shape-check gate `scripts/adr_check.py` (ADR 012); all three travel with the template.
 
 ## 6. Extraction (`scripts/vault_sync.py`)
 

@@ -9,7 +9,7 @@ Version: see `VERSION` (copied into each project as `docs/.template-version`).
 | Layer | Lives in | Holds |
 |---|---|---|
 | Machine-wide, once | `~/.claude` (linked from here by `install.sh`) | the git-safety hook, the skills |
-| Template, per project | copied by `adopt.sh` | `CLAUDE.md` (a contents page), the standards, the handoff, the closing checklist, `scripts/gates`, `scripts/mutate.py`, `scripts/md_wrap_check.py` |
+| Template, per project | copied by `adopt.sh` | `CLAUDE.md` (a contents page), the standards, the handoff, the closing checklist, `scripts/gates`, `scripts/mutate.py`, `scripts/md_wrap_check.py`, `scripts/adr_check.py`, the record template and the vault conventions |
 | Project facts | the project itself | its gate commands, its rules, its decisions, its handoff |
 
 ## What is in here
@@ -27,11 +27,16 @@ coding-standards/
 │   ├── CODE_QUALITY_STANDARDS.md    the engineering process; §12 is "enforce by code, not wording"
 │   ├── CLOSING_A_SLICE.md           the checklist, with "return to" lines
 │   ├── HANDOFF.template.md          → docs/HANDOFF.md: volatile facts only, under 60 lines
+│   ├── VAULT_CONVENTIONS.md         names, fields, tags and links, so the owner's vault can read the records
+│   ├── decisions/TEMPLATE.md        the decision-record template (frontmatter, summary, sections)
+│   ├── sop/write-an-adr.md          write a decision record before the code
+│   ├── sop/rename-a-concept.md      name a concept, and rename one without breaking records
 │   └── reference/GOTCHAS.template.md  → docs/reference/GOTCHAS.md: traps and recipes (the durable half)
 ├── scripts/
 │   ├── gates (+ gates.conf.template)  every gate, one line each, failures show their last lines
 │   ├── mutate.py                      mutation check for new tests; restores from a copy, never git
-│   └── md_wrap_check.py               fails on hard-wrapped Markdown prose (a gate; test_md_wrap_check.py beside it)
+│   ├── md_wrap_check.py               fails on hard-wrapped Markdown prose (a gate; test_md_wrap_check.py beside it)
+│   └── adr_check.py                   fails on a decision record without frontmatter, a summary or an index row (a gate; ADR 012)
 ├── hooks/
 │   ├── git_safety.py          PreToolUse hook; blocks the git commands that lose work or leave a trace
 │   └── test_git_safety.py     both paths of every rule (python3 -m unittest discover -s hooks)

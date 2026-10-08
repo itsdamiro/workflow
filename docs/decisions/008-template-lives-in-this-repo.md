@@ -37,3 +37,7 @@ Running `install.sh` from here, removing the old copy, and hardening the hook.
 - **Copy everything unchanged.** Two copies to maintain, and unreviewed code in a public repository.
 - **Describe the steps only in prose.** The scripts are what make a new project one command.
 - **Recreate the scripts from scratch.** The existing ones are tested and in daily use; rewriting them adds risk for no gain.
+
+## Amendment (2026-10-08): what else the template carries
+
+- ADR 012 adds the record template, the vault conventions page, two procedures and a shape-check gate (`adr_check.py`) to the template, and makes this repository's own copies symlinks to them.

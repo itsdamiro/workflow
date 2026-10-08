@@ -7,3 +7,4 @@ test      | .  | pytest -q
 typecheck | ui | npm run typecheck
 frontend  | ui | npm run test -- --run
 md-wrap   | .  | python3 scripts/md_wrap_check.py
+adr-check | .  | python3 scripts/adr_check.py   # add `--from NNN` to start at a record number while older ones are backfilled

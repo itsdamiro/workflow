@@ -30,5 +30,5 @@ This file is a contents page: short on purpose. The substance is one level down,
 ## Contents of the rest
 
 - Traps and recipes: `docs/reference/GOTCHAS.md`
-- Decisions: `docs/decisions/`
+- Decisions: `docs/decisions/`; writing one: `docs/sop/write-an-adr.md`; names, tags and links: `docs/VAULT_CONVENTIONS.md`
 - Why: `docs/VISION.md` *(if there is one)*

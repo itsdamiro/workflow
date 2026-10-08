@@ -1,0 +1,1 @@
+../template/scripts/adr_check.py
