@@ -5,9 +5,7 @@ description: Tests whether a project's docs/HANDOFF.md lets a fresh session star
 
 # Checking a handoff
 
-The point is to find what a new session would have to guess. Do it in a fresh context so earlier conversation cannot fill
-the gaps: a subagent (or a new session), given only the repository path and the instruction
-below, not your own notes.
+The point is to find what a new session would have to guess. Do it in a fresh context so earlier conversation cannot fill the gaps: a subagent (or a new session), given only the repository path and the instruction below, not your own notes.
 
 ## Steps
 
@@ -34,5 +32,4 @@ Copy this checklist:
 - One term per concept throughout.
 - "Waiting on the owner" says `None.` when empty.
 
-Report as: question, the answer given, what was true, the fix. Do not edit the handoff until the owner has seen the list,
-unless they asked you to.
+Report as: question, the answer given, what was true, the fix. Do not edit the handoff until the owner has seen the list, unless they asked you to.

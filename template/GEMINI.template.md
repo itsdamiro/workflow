@@ -2,15 +2,12 @@
 
 [One or two sentences: what this project is and who it is for.]
 
-This file mirrors `CLAUDE.md` on purpose: both assistants work in this repo and hold to one process, not two.
-It is a contents page: short on purpose. The substance is one level down, in the files it links to.
+This file mirrors `CLAUDE.md` on purpose: both assistants work in this repo and hold to one process, not two. It is a contents page: short on purpose. The substance is one level down, in the files it links to.
 
 ## Start here
 
 1. Read `docs/HANDOFF.md`: where the work stands and what is next.
-2. Read `docs/COLLABORATION_STANDARDS.md` and `docs/CODE_QUALITY_STANDARDS.md`. They are binding, not background:
-   candid over flattering, state written through to files, evidence before "done", no simulated delays, ask
-   rather than guess.
+2. Read `docs/COLLABORATION_STANDARDS.md` and `docs/CODE_QUALITY_STANDARDS.md`. They are binding, not background: candid over flattering, state written through to files, evidence before "done", no simulated delays, ask rather than guess.
 3. Closing a slice of work follows `docs/CLOSING_A_SLICE.md`.
 
 ## Primary commands

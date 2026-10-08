@@ -27,8 +27,7 @@ What this makes easier, what it makes harder, what it leaves open.
 
 ## Alternatives rejected
 
-- **The option.** Why not, in one or two lines. This section is where ideas are kept for later; write the condition under
-  which the option would become right.
+- **The option.** Why not, in one or two lines. This section is where ideas are kept for later; write the condition under which the option would become right.
 
 ## Amendment (YYYY-MM-DD): title
 

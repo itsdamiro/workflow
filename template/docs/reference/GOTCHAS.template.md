@@ -1,8 +1,6 @@
 # Gotchas and recipes
 
-> Copy to `docs/reference/GOTCHAS.md`. The durable half of the handoff: traps that have already cost time, and
-> the exact recipe for each recurring chore. One entry per trap, each with the symptom, the cause and the fix. When
-> an entry stops being true, delete it.
+> Copy to `docs/reference/GOTCHAS.md`. The durable half of the handoff: traps that have already cost time, and the exact recipe for each recurring chore. One entry per trap, each with the symptom, the cause and the fix. When an entry stops being true, delete it.
 
 ## Contents
 1. Traps

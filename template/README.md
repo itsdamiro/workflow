@@ -1,9 +1,6 @@
 # coding-standards: the project template
 
-How every project of this machine is run with an AI assistant: the standards, the handoff, the way a slice is closed,
-and the scripts and hooks that enforce what wording cannot. Generalized from Sympose and Stylo (2026-09, 2026-10) and
-from Anthropic's skill-authoring practices (progressive disclosure, checklists with go-back lines, feedback loops,
-enforce the never-break rules in code).
+How every project of this machine is run with an AI assistant: the standards, the handoff, the way a slice is closed, and the scripts and hooks that enforce what wording cannot. Generalized from Sympose and Stylo (2026-09, 2026-10) and from Anthropic's skill-authoring practices (progressive disclosure, checklists with go-back lines, feedback loops, enforce the never-break rules in code).
 
 Version: see `VERSION` (copied into each project as `docs/.template-version`).
 
@@ -43,11 +40,7 @@ coding-standards/
     └── checking-a-handoff/    tests a handoff with a fresh reader and six questions
 ```
 
-The `.template.md` suffixes are deliberate: the machine-wide gitignore (`.gitignore_global`) excludes a literal
-`CLAUDE.md` / `GEMINI.md`, which is what keeps AI-tooling config out of every repository. `adopt.sh` renames them.
-To have the same machine-wide ignore, point git at a global ignore file (`git config --global core.excludesFile
-~/.gitignore_global`) and put the no-trace block from `CONTRIBUTING.snippet.md` in it. Without one, `adopt.sh` still adds
-the block to each project's own `.gitignore`.
+The `.template.md` suffixes are deliberate: the machine-wide gitignore (`.gitignore_global`) excludes a literal `CLAUDE.md` / `GEMINI.md`, which is what keeps AI-tooling config out of every repository. `adopt.sh` renames them. To have the same machine-wide ignore, point git at a global ignore file (`git config --global core.excludesFile ~/.gitignore_global`) and put the no-trace block from `CONTRIBUTING.snippet.md` in it. Without one, `adopt.sh` still adds the block to each project's own `.gitignore`.
 
 ## Using it
 
@@ -70,22 +63,14 @@ It creates what is missing and reports what differs; it never overwrites. Then:
 2. List generated-output directories in `.claude/git-safety.deny-add` (the hook then blocks `git add <dir>`).
 3. Write `docs/HANDOFF.md`, and run the `checking-a-handoff` skill on it.
 4. Add the section of `CONTRIBUTING.snippet.md` to the project's `CONTRIBUTING.md`.
-5. A project that already has its own versions of the standards keeps them; `adopt.sh --check` shows how they differ
-   from the template, and anything worth generalizing comes back here (below).
+5. A project that already has its own versions of the standards keeps them; `adopt.sh --check` shows how they differ from the template, and anything worth generalizing comes back here (below).
 
-**A project that already has a checklist or journal.** Move it in this order, keeping the old file until the new
-handoff passes its check: hooks and gates first (additive, invisible when behaving), then the handoff and
-`docs/reference/`, then shrink `CLAUDE.md` to a contents page, then archive the old file outside the repo.
+**A project that already has a checklist or journal.** Move it in this order, keeping the old file until the new handoff passes its check: hooks and gates first (additive, invisible when behaving), then the handoff and `docs/reference/`, then shrink `CLAUDE.md` to a contents page, then archive the old file outside the repo.
 
 ## The no-trace policy
 
-Standing across every repository (see `docs/COLLABORATION_STANDARDS.md`): one author identity, no attribution
-trailers, assistant and editor tooling never committed. The hook enforces the trailer rule even when a harness
-tries to add one. Because `.claude/` is ignored machine-wide, per-project hook settings
-(`.claude/git-safety.deny-add`) are local to the machine by design.
+Standing across every repository (see `docs/COLLABORATION_STANDARDS.md`): one author identity, no attribution trailers, assistant and editor tooling never committed. The hook enforces the trailer rule even when a harness tries to add one. Because `.claude/` is ignored machine-wide, per-project hook settings (`.claude/git-safety.deny-add`) are local to the machine by design.
 
 ## Keeping it in sync
 
-These files are the source of truth; a project's copies are snapshots, not forks. When a project's work finds
-something worth generalizing, change it here first (bump `VERSION`), then `./adopt.sh <project> --check` in each
-active project and merge what differs by hand. Run the hook tests after any change to the hook.
+These files are the source of truth; a project's copies are snapshots, not forks. When a project's work finds something worth generalizing, change it here first (bump `VERSION`), then `./adopt.sh <project> --check` in each active project and merge what differs by hand. Run the hook tests after any change to the hook.

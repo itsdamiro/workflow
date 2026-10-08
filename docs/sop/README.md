@@ -1,7 +1,6 @@
 # Procedures
 
-Step-by-step runbooks any assistant can follow. Capabilities, not one tool's verbs. Each says what it needs and what it
-must not do.
+Step-by-step runbooks any assistant can follow. Capabilities, not one tool's verbs. Each says what it needs and what it must not do.
 
 | SOP | What it is for |
 |---|---|

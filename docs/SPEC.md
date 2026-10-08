@@ -1,7 +1,6 @@
 # Workflow: specification
 
-Status: design, 2026-10-08. Decisions and their alternatives are in `docs/decisions/`; step-by-step procedures are in
-`docs/sop/`. Where this file and an ADR disagree, the ADR wins until this file is corrected.
+Status: design, 2026-10-08. Decisions and their alternatives are in `docs/decisions/`; step-by-step procedures are in `docs/sop/`. Where this file and an ADR disagree, the ADR wins until this file is corrected.
 
 ## Contents
 1. Purpose
@@ -17,16 +16,13 @@ Status: design, 2026-10-08. Decisions and their alternatives are in `docs/decisi
 
 ## 1. Purpose
 
-Stop AI-assisted projects losing their thinking between sessions, keep long sessions cheap, and turn what projects learn
-into personal, connected notes: with any model or tool.
+Stop AI-assisted projects losing their thinking between sessions, keep long sessions cheap, and turn what projects learn into personal, connected notes: with any model or tool.
 
 ## 2. Principles
 
 - **Portable by layers** (ADR 002): files and scripts first, procedures second, tool adapters last and optional.
-- **The repo is the source of truth; the vault is personal output** (ADR 003). Nothing from the vault is committed to a
-  project, and nothing personal is committed here.
-- **Deterministic first.** A script does what a script can do. A model drafts only what needs judgment, and the owner
-  accepts it. Generated notes carry no model-written claims.
+- **The repo is the source of truth; the vault is personal output** (ADR 003). Nothing from the vault is committed to a project, and nothing personal is committed here.
+- **Deterministic first.** A script does what a script can do. A model drafts only what needs judgment, and the owner accepts it. Generated notes carry no model-written claims.
 - **Write state through to files.** Nothing that matters lives only in a conversation.
 - **No AI trace in commits or repositories** (see `docs/COLLABORATION_STANDARDS.md`).
 
@@ -53,16 +49,11 @@ Inbox/             outside sources, unevaluated
 Templates/
 ```
 
-Each top-level folder has a definition note named after the folder (`Projects/Projects.md`) stating its purpose and
-the frontmatter template for its notes (Sympose's folder-definition convention).
+Each top-level folder has a definition note named after the folder (`Projects/Projects.md`) stating its purpose and the frontmatter template for its notes (Sympose's folder-definition convention).
 
-**Names.** A decision card is `NNN - Sentence from the slug.md` (`040 - The persona looks up notes itself.md`). The
-leading number is the key the script matches on; the sentence is built from the repo filename's slug, not the heading,
-so it is short and has no characters Obsidian rejects. Links are written
-`[[040 - The persona looks up notes itself|ADR 040]]`. If two cards would get the same name the script stops and reports.
+**Names.** A decision card is `NNN - Sentence from the slug.md` (`040 - The persona looks up notes itself.md`). The leading number is the key the script matches on; the sentence is built from the repo filename's slug, not the heading, so it is short and has no characters Obsidian rejects. Links are written `[[040 - The persona looks up notes itself|ADR 040]]`. If two cards would get the same name the script stops and reports.
 
-**Renames and removals.** A renamed slug leaves a one-line redirect note at the old name. A removed ADR leaves a
-tombstone card (status removed, date, one line why) so links to it still resolve.
+**Renames and removals.** A renamed slug leaves a one-line redirect note at the old name. A removed ADR leaves a tombstone card (status removed, date, one line why) so links to it still resolve.
 
 **Frontmatter, on every note.**
 
@@ -78,29 +69,19 @@ tags: [type/decision, status/accepted, project/workflow]
 ---
 ```
 
-**Links.** Every note links to at least one other. Cards link to their project hub, their concepts and what they amend.
-An idea links to at least one project or concept. `Inbox/` notes may stay unlinked for a set number of days. Links in
-frontmatter must be quoted; the main links go in the body.
+**Links.** Every note links to at least one other. Cards link to their project hub, their concepts and what they amend. An idea links to at least one project or concept. `Inbox/` notes may stay unlinked for a set number of days. Links in frontmatter must be quoted; the main links go in the body.
 
-**Tags.** Lowercase, namespaced, kebab-case: `type/`, `status/`, `project/`, `topic/`, `lang/`, `source/`. The sync adds
-the structural tags from the fields; the owner adds `topic/` tags. A `Tags` note lists the allowed namespaces and the
-lint rejects others. Rule: if you would write about it, it is a concept; if you would only filter or count by it, it is
-a tag.
+**Tags.** Lowercase, namespaced, kebab-case: `type/`, `status/`, `project/`, `topic/`, `lang/`, `source/`. The sync adds the structural tags from the fields; the owner adds `topic/` tags. A `Tags` note lists the allowed namespaces and the lint rejects others. Rule: if you would write about it, it is a concept; if you would only filter or count by it, it is a tag.
 
-**Lint** (a failing lint is reported, never silently fixed): required fields present; every link resolves; no orphans
-outside `Inbox/`; every tag is in the list; every concept used is a note in `Concepts/`.
+**Lint** (a failing lint is reported, never silently fixed): required fields present; every link resolves; no orphans outside `Inbox/`; every tag is in the list; every concept used is a note in `Concepts/`.
 
 ## 5. ADR format
 
-ADRs stay in each project's `docs/decisions/`, numbered, with Context, Decision, Consequences, Alternatives rejected and
-dated amendments (`## Amendment (date): title`). New ADRs add frontmatter (`type`, `status`, `date`, `projects`,
-`concepts`, `amends`, `supersedes`) and a three-line summary at the top. `governs:` (paths of the code an ADR explains,
-checked by a gate) is optional and not yet decided. See `docs/decisions/TEMPLATE.md`.
+ADRs stay in each project's `docs/decisions/`, numbered, with Context, Decision, Consequences, Alternatives rejected and dated amendments (`## Amendment (date): title`). New ADRs add frontmatter (`type`, `status`, `date`, `projects`, `concepts`, `amends`, `supersedes`) and a three-line summary at the top. `governs:` (paths of the code an ADR explains, checked by a gate) is optional and not yet decided. See `docs/decisions/TEMPLATE.md`.
 
 ## 6. Extraction (`scripts/vault_sync.py`)
 
-A script, no model, idempotent. It reads the committed state of each project's default branch (so unmerged drafts are
-not published) and writes into `Projects/<name>/`.
+A script, no model, idempotent. It reads the committed state of each project's default branch (so unmerged drafts are not published) and writes into `Projects/<name>/`.
 
 | Source | Output | How |
 |---|---|---|
@@ -109,8 +90,7 @@ not published) and writes into `Projects/<name>/`.
 | `docs/reference/GOTCHAS.md` | mirrored | copied |
 | module docstrings | `Code map.md` | Python first; a later version; other languages add an extractor when a project needs one |
 
-The first version (ADR 009) does the cards and the Rejected-ideas note only. Concept notes are the owner's: the cards that
-name a concept appear in its backlinks. The `GOTCHAS` mirror waits on a decision about local-only files.
+The first version (ADR 009) does the cards and the Rejected-ideas note only. Concept notes are the owner's: the cards that name a concept appear in its backlinks. The `GOTCHAS` mirror waits on a decision about local-only files.
 
 The script only overwrites notes marked `generated: true`. It never touches a note without the marker.
 
@@ -131,15 +111,11 @@ Commit and push stay the owner's call. Writing the ADR itself happens before the
 
 ## 8. Session guard
 
-Optional adapter (a Claude Code mod). It shows context size in the status line, shows a band with a "Run /handoff"
-button at a soft threshold (default 150k tokens) and a stronger one at a hard threshold (default 200k). It never blocks.
-It may also show rate-limit windows and the closing checklist. Prototype in `adapters/claude/session-guard/`: validated, not yet checked drawing on
-the desktop app. The hard git rules stay in a hook, not in the mod.
+Optional adapter (a Claude Code mod). It shows context size in the status line, shows a band with a "Run /handoff" button at a soft threshold (default 150k tokens) and a stronger one at a hard threshold (default 200k). It never blocks. It may also show rate-limit windows and the closing checklist. Prototype in `adapters/claude/session-guard/`: validated, not yet checked drawing on the desktop app. The hard git rules stay in a hook, not in the mod.
 
 ## 9. Project types
 
-Language-neutral. `gates.conf` is `name | directory | command`. SOPs avoid assuming a UI, a server or a language.
-Only the code-map extractor is language-specific.
+Language-neutral. `gates.conf` is `name | directory | command`. SOPs avoid assuming a UI, a server or a language. Only the code-map extractor is language-specific.
 
 ## 10. Open questions
 

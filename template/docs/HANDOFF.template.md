@@ -1,10 +1,6 @@
 # Handoff
 
-> Copy to `docs/HANDOFF.md`. Rewrite it at the close of every slice, under 60 lines.
-> It holds only what is **volatile**: where the work stands, what is next, what waits on the owner.
-> Durable things do not live here: a decision is an ADR, a recipe or a trap is in `docs/reference/`, a number
-> (test count, commit hash) is whatever `git log -1` and `scripts/gates` say today. Prose that copies those goes stale.
-> Name things one way throughout (one term per concept).
+> Copy to `docs/HANDOFF.md`. Rewrite it at the close of every slice, under 60 lines. It holds only what is **volatile**: where the work stands, what is next, what waits on the owner. Durable things do not live here: a decision is an ADR, a recipe or a trap is in `docs/reference/`, a number (test count, commit hash) is whatever `git log -1` and `scripts/gates` say today. Prose that copies those goes stale. Name things one way throughout (one term per concept).
 
 ## Now
 
@@ -25,8 +21,7 @@
 
 ## New since the last handoff
 
-- [a trap or a fact learned this session that the next one needs. At the close, move each to
-  `docs/reference/GOTCHAS.md` or an ADR and delete it here.]
+- [a trap or a fact learned this session that the next one needs. At the close, move each to `docs/reference/GOTCHAS.md` or an ADR and delete it here.]
 
 ## How to pick this up cold
 
@@ -46,6 +41,4 @@ git status -sb           # whether anything is uncommitted or unpushed
 
 ## Check this file
 
-A fresh session reads only this file and the pointers above, then answers: what is next, how do I run the gates,
-what must I not do, what is waiting on the owner. Every wrong or hesitant answer is a line to fix here
-(see the `checking-a-handoff` skill).
+A fresh session reads only this file and the pointers above, then answers: what is next, how do I run the gates, what must I not do, what is waiting on the owner. Every wrong or hesitant answer is a line to fix here (see the `checking-a-handoff` skill).
