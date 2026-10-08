@@ -48,3 +48,9 @@ The vault gains a map the owner can trust to be only what the code says about it
 - **Copying the docstring as plain text.** A `[[x]]` or `#tag` in it becomes a link or tag and can fail the lint. Fencing is cheaper than escaping.
 
 **Accepted** by the owner on 2026-10-08, in chat, as written: a paragraph of at most 600 characters per file, tests left out, the note named `<name> - Code map`.
+
+## Amendment (2026-10-08): the first real run
+
+- **The Context figure was too low.** It said Sympose has 87 non-test Python files; the sync lists 191 (`git ls-files '*.py'` gives 348, of which 157 are tests, as the Context also says). The 87 counted only part of the tree, so the estimate of about 30 KB for every docstring in full, which the "Every docstring in full" alternative leans on, was wrong too.
+- **What it produced.** Sympose's note is 191 files under four folder headings, about 67 KB, with one file (`sympose/__init__.py`) without a docstring and none unreadable. This repository's is 7 files. The sync of Sympose took about 4 seconds.
+- **Not changed.** The decision stands as accepted: the paragraph cap is still 600 characters. Whether 67 KB is too long to scan is for the owner to judge in Obsidian; a shorter cap (the first sentence) is a one-line change to `DOCSTRING_MAX` and the cut rule, and would be recorded here.
