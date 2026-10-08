@@ -56,3 +56,7 @@ The history lives only in the vault, which is local and not yet under git: a del
 - **A CSV or JSON file.** Easier to chart, but invisible in Obsidian and not a note the vault lint knows. Would be right when a chart is built.
 
 **Accepted** by the owner on 2026-10-08, in chat, as written.
+
+## Amendment (2026-10-09): the Claude adapter exists
+
+The adapter that supplies `--context-tokens` under Claude Code is `adapters/claude/context-report/last_context.py`, which reads the session's own transcript by `$CLAUDE_CODE_SESSION_ID` and gives a dash when it cannot (ADR 015). The decision above is unchanged; the Claude adapter is no longer open.

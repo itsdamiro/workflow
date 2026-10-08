@@ -18,3 +18,4 @@ Lightweight records for anything durable. Format: `TEMPLATE.md`. Standard: `docs
 | [012](012-decision-records-and-vault-conventions-travel-with-the-template.md) | Decision records and vault conventions travel with the template | Accepted |
 | [013](013-code-map-from-module-docstrings.md) | The code map is the committed Python module docstrings, copied unchanged | Accepted |
 | [014](014-stats-line-append-only-note.md) | The stats line is a row added to an append-only note, never rewritten | Accepted |
+| [015](015-context-size-from-the-session-transcript.md) | The Claude adapter reads the context size from the session's own transcript, and gives a dash when it cannot | Accepted |

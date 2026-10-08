@@ -18,31 +18,33 @@ import statistics as st
 MIN_MESSAGES = 5
 
 
+def session_contexts(path: str) -> list[int]:
+    """The context of each main-thread answer in one transcript, in order; each message id counts once, one without usage not at all."""
+    seen, ctx = set(), []
+    with open(path, encoding="utf-8", errors="replace") as f:
+        for line in f:
+            try:
+                e = json.loads(line)
+            except ValueError:
+                continue
+            if e.get("type") != "assistant" or e.get("isSidechain"):
+                continue
+            m = e.get("message") or {}
+            mid = m.get("id")
+            if mid is not None and mid in seen:
+                continue
+            seen.add(mid)
+            u = m.get("usage") or {}
+            total = sum(u.get(k, 0) for k in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"))
+            if total:
+                ctx.append(total)
+    return ctx
+
+
 def load_sessions(folder: str) -> list[list[int]]:
     """One list of per-message contexts for each session with at least MIN_MESSAGES messages."""
-    sessions = []
-    for path in sorted(glob.glob(os.path.join(folder, "*.jsonl"))):
-        seen, ctx = set(), []
-        with open(path, encoding="utf-8", errors="replace") as f:
-            for line in f:
-                try:
-                    e = json.loads(line)
-                except ValueError:
-                    continue
-                if e.get("type") != "assistant" or e.get("isSidechain"):
-                    continue
-                m = e.get("message") or {}
-                mid = m.get("id")
-                if mid is not None and mid in seen:
-                    continue
-                seen.add(mid)
-                u = m.get("usage") or {}
-                total = sum(u.get(k, 0) for k in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"))
-                if total:
-                    ctx.append(total)
-        if len(ctx) >= MIN_MESSAGES:
-            sessions.append(ctx)
-    return sessions
+    contexts = (session_contexts(path) for path in sorted(glob.glob(os.path.join(folder, "*.jsonl"))))
+    return [ctx for ctx in contexts if len(ctx) >= MIN_MESSAGES]
 
 
 def simulate(sessions: list[list[int]], cap: int, restart: int) -> tuple[int, int]:

@@ -11,7 +11,7 @@ tags: [type/decision, status/accepted, project/workflow, topic/vault, topic/patt
 
 # 005 — One `/handoff` procedure closes a slice
 
-> **Summary.** A single procedure runs the vault sync, the lints, the pattern scan and the handoff draft, checks the handoff with a fresh reader, and reports what awaits the owner's acceptance.
+> **Summary.** A single procedure commits and pushes the slice, runs the vault sync, the lints, the pattern scan and the handoff draft, and reports what awaits the owner's acceptance. The option `check` adds the two reviews of `docs/CLOSING_A_SLICE.md` step 5 (correctness, and over-engineering) before the commit and a fresh-reader test of the handoff.
 
 ## Context
 
@@ -44,3 +44,18 @@ One command from the owner's side. The work inside a long session costs tokens, 
 - **The limits, none of which `/handoff` relaxes:** it stages named files only, never `git add .`, `-A` or `-u`, and only files that belong to the slice. If it cannot tell which changed files belong to the slice, it commits none of the doubtful ones and asks. It reads the diff before committing, as the standards require, and on a public repository stops on anything private. The commit carries no attribution trailer and one author identity. It never force-pushes. `docs/HANDOFF.md` is local-only and is not committed.
 - **Not changed:** the git-safety hook still asks before a `git push`, so the owner confirms the push in the prompt unless they have allowed it. That pause is kept on purpose: the amendment removes the instruction to stop, not the hook's check.
 - **Follows:** `docs/sop/handoff.md` (step 1, the "Do not" list and the opening line) is amended to match, on the owner's word.
+
+## Amendment (2026-10-08): `/handoff check` also runs the correctness review
+
+- **Why:** the owner asked for the `/code-review` to leave the default close and sit on `check`. A review of the slice's whole diff costs tokens (`docs/CLOSING_A_SLICE.md`, step 5a, says so) and the default close is the quick one the session guard's button starts.
+- **Decided by the owner:** plain `/handoff` does not run `/code-review`. `/handoff check` runs it as well as the fresh-reader check. The two are not separate options: `check` now means "the slower, independent checks".
+- **The order:** the review comes first, before the commit in step 1, because it reads the slice's diff (the uncommitted changes, or the commits since the last handoff if the work is already committed) and its findings change the code. It runs at `high` unless the owner names another level, as step 5a says, and the assistant says the level before running it. Each real finding is fixed (tests first, gates after) or declined with one line saying why; the gates then pass before anything is committed. The fresh-reader check stays between the handoff draft and the stats line.
+- **Not included at first:** the over-engineering lens (step 5b); the next amendment adds it.
+- **Consequence:** a default close no longer carries the review that `docs/CLOSING_A_SLICE.md` step 5a calls not optional. The full checklist still has it; whether a default close should run it by hand is the owner's call each time. `check` is now the expensive close, which is what the guard's **Close + check** button starts.
+
+## Amendment (2026-10-08): `check` runs both reviews of step 5 together
+
+- **Decided by the owner:** the over-engineering lens (`docs/CLOSING_A_SLICE.md` step 5b) joins the `/code-review` on `check`. Plain `/handoff` runs neither.
+- **How they run:** together, before the commit, over the same diff. The correctness review is `/code-review` as before. The over-engineering lens is a reader who did not write the code, asked one question, whether every new thing earns its place (duplicated logic, work done twice, options nothing uses, abstractions with one caller, defensive code for a case that cannot happen, a new file where an edit would do), with `/simplify` or a read-only subagent as the tool. Neither review hides the other's findings, and the two lists are fixed in one round: each real finding is fixed (tests first, gates after) or declined with one line saying why. A simplification must not change behaviour a test pins.
+- **Cost:** `check` is now the expensive close, as it was meant to be: two reviews and, later, the fresh-reader rounds.
+

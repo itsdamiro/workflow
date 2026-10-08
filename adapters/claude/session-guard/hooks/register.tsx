@@ -7,12 +7,14 @@ const usage = atom({ plugin: 'session-guard', key: 'usage' } as const, null)
 const dismissed = atom({ plugin: 'session-guard', key: 'dismissed' } as const, 'ok' as GuardLevel)
 
 const RANK: Record<GuardLevel, number> = { ok: 0, soft: 1, hard: 2 }
+// The same values are declared in .claude-plugin/plugin.json (the config menu and the host read them there);
+// test_defaults.py fails when the two differ.
 const DEFAULTS = {
   softTokens: 150000,
   hardTokens: 200000,
   limitPercent: 80,
   handoffPrompt: '/handoff', // the one entry point: the handoff skill, which follows docs/sop/handoff.md
-  handoffCheckPrompt: '/handoff check', // the same, plus the slow fresh-reader test (ADR 005 amendment)
+  handoffCheckPrompt: '/handoff check', // the same, plus the two reviews and the slow fresh-reader test (ADR 005 amendments)
 }
 
 const k = (n: number) => `${Math.round(n / 1000)}k`

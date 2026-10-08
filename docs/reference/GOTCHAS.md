@@ -35,3 +35,5 @@
 python3 adapters/claude/context-report/context_report.py ~/.claude/projects/<project-folder>
 ```
 Prints session length, context size and what a cap of 150k, 200k and 300k would save (`--caps`, `--restart-extra`). Aggregates only. Claude Code transcripts only, main thread only. It does not reproduce ADR 001's split of reads by kind; count image reads by number when you add that.
+
+`adapters/claude/context-report/last_context.py` (ADR 015) prints one number, the context of the current session's last answer, from `$CLAUDE_CODE_SESSION_ID`; it exits 1 and prints nothing when it cannot name that transcript, and the stats row then shows a dash.
