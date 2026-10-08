@@ -11,3 +11,4 @@ Lightweight records for anything durable. Format: `TEMPLATE.md`. Standard: `docs
 | [005](005-one-handoff-command.md) | One `/handoff` procedure closes a slice | Proposed |
 | [006](006-pattern-scan-every-handoff.md) | Scan each slice's diff for reusable patterns | Accepted |
 | [007](007-graphify-optional-later.md) | Graphify is not part of the core; try it later for outside sources | Proposed |
+| [008](008-template-lives-in-this-repo.md) | The project template and its scripts live in this repository | Accepted (live switch-over not decided) |

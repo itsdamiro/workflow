@@ -1,0 +1,8 @@
+# One gate per line:  name | directory (from the repo root) | command
+# Copy to scripts/gates.conf. Keep every gate that CLAUDE.md lists under "Primary Commands".
+# A gate that cannot fail is not a gate: a command that checks nothing (e.g. `tsc --noEmit -p .` on a project that
+# uses project references) is worse than none.
+lint      | .  | ruff check .
+test      | .  | pytest -q
+typecheck | ui | npm run typecheck
+frontend  | ui | npm run test -- --run

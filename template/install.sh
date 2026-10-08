@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Machine-wide setup, once per machine (safe to run again):
+#   - links the hook and the skills into ~/.claude (so a change here is a change everywhere)
+#   - adds the git-safety hook to ~/.claude/settings.json (a backup is kept; nothing else in the file is touched)
+# Usage: ./install.sh            do it
+#        ./install.sh --dry-run  show what would change, change nothing
+set -eu
+here="$(cd "$(dirname "$0")" && pwd)"
+dry=0; [ "${1:-}" = "--dry-run" ] && dry=1
+claude="$HOME/.claude"
+say() { printf '%s\n' "$*"; }
+run() { if [ "$dry" = 1 ]; then say "  would: $*"; else "$@"; fi; }
+
+say "hook:"
+run mkdir -p "$claude/hooks"
+run ln -sfn "$here/hooks/git_safety.py" "$claude/hooks/git_safety.py"
+
+say "skills:"
+run mkdir -p "$claude/skills"
+for skill in "$here"/skills/*/; do
+  name="$(basename "$skill")"
+  if [ -e "$claude/skills/$name" ] && [ ! -L "$claude/skills/$name" ]; then
+    say "  $name: a real folder is already there, left alone"
+  else
+    run ln -sfn "${skill%/}" "$claude/skills/$name"
+  fi
+done
+
+say "settings:"
+python3 - "$claude/settings.json" "$dry" <<'PY'
+import json, os, shutil, sys, time
+path, dry = sys.argv[1], sys.argv[2] == "1"
+settings = json.load(open(path)) if os.path.exists(path) else {}
+command = f"python3 {os.path.expanduser('~/.claude/hooks/git_safety.py')}"
+entries = settings.setdefault("hooks", {}).setdefault("PreToolUse", [])
+if any(h.get("command") == command for e in entries for h in e.get("hooks", [])):
+    print("  git-safety hook already in settings.json")
+    sys.exit(0)
+entries.append({"matcher": "Bash", "hooks": [{"type": "command", "command": command}]})
+if dry:
+    print("  would add to settings.json:", json.dumps(entries[-1]))
+    sys.exit(0)
+if os.path.exists(path):
+    shutil.copy2(path, f"{path}.bak-{int(time.time())}")
+with open(path, "w") as f:
+    json.dump(settings, f, indent=2)
+    f.write("\n")
+print("  added the git-safety hook to settings.json (backup kept next to it)")
+PY
+say "done. Restart open Claude Code sessions to load the hook."
