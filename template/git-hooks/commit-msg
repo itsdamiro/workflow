@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# commit-msg hook: the no-trace rule for any tool. Rejects a commit message that carries an attribution trailer.
+# Blocks: a Co-authored-by: or Signed-off-by: line, a "Generated with" line, or noreply@anthropic.com.
+# The whole message file is checked, comment lines too: with -m and -F git keeps them. It sees the message however it was
+# given (-m, -F, the editor, -s), which a tool-specific hook cannot. `git commit --no-verify` skips it, as any hook.
+if grep -Eiq '^(co-authored-by|signed-off-by):|generated with|noreply@anthropic\.com' "$1"; then
+  echo "commit-msg: this message carries an attribution trailer. Commits are authored by the owner alone; remove the" >&2
+  echo "trailer line (Co-authored-by, Signed-off-by, 'Generated with', noreply@anthropic.com) and commit again." >&2
+  exit 1
+fi
+exit 0

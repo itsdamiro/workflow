@@ -14,7 +14,8 @@ For any assistant, with the owner. Works for a new project and for one moving on
 
 1. Create the repository (`git init -b main`) or open the existing one.
 2. `template/adopt.sh <path-to-project> --name "<Project Name>"` (add `--gemini` for a `GEMINI.md`). It creates what is
-   missing, never overwrites, and adds the ignore block for assistant files.
+   missing, never overwrites, adds the ignore block for assistant files, and installs a `commit-msg` git hook that refuses
+   an attribution trailer (an existing hook is reported, never replaced).
 3. Fill the blanks in the contents page and `scripts/gates.conf`; run `scripts/gates` until it shows what you expect. A gate
    that cannot fail is not a gate.
 4. List generated-output folders in `.claude/git-safety.deny-add`.

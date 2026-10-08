@@ -42,6 +42,20 @@ for pair in "${pairs[@]}"; do
   fi
 done
 
+# the commit-msg hook (no attribution trailer, whatever the tool): into the project's git hooks, never over another hook
+hooksdir="$(git -C "$proj" rev-parse --git-path hooks 2>/dev/null || true)"
+if [ -n "$hooksdir" ]; then
+  case "$hooksdir" in /*) ;; *) hooksdir="$proj/$hooksdir" ;; esac
+  src="$here/git-hooks/commit-msg"; dst="$hooksdir/commit-msg"
+  if [ -e "$dst" ]; then
+    if cmp -s "$src" "$dst"; then echo "  same     git hook commit-msg"; else echo "  differs  git hook commit-msg   (diff -u '$src' '$dst')"; fi
+  elif [ "$check" = 1 ]; then
+    echo "  missing  git hook commit-msg"
+  else
+    mkdir -p "$hooksdir"; cp "$src" "$dst"; chmod +x "$dst"; echo "  created  git hook commit-msg"
+  fi
+fi
+
 [ "$check" = 1 ] && exit 0
 
 # the no-AI-trace block, appended once

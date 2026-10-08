@@ -20,8 +20,10 @@
 - **Cause:** the hook reads the first word of each shell segment and long flags. These slip through (tested): a leading
   `VAR=1 git ...`, `env git ...`, `bash -c 'git add .'`, a combined short flag such as `git commit -sm x`, and a message
   read from a file (`git commit -F msg.txt`, never scanned for a trailer). Input that is not valid JSON lets the command run.
-- **Do this:** do not rely on it for the no-trailer rule alone; check `git log --format=%B` before a push. Hardening
-  (skip env prefixes, unwrap `env` and `bash -c`, split combined flags, scan the `-F` file) is waiting on the owner.
+- **Do this:** the no-trailer rule is also enforced by git itself: `template/git-hooks/commit-msg` (installed by `adopt.sh`)
+  sees the final message however it was given, so `-sm`, `-F` and a wrapped command no longer slip a trailer through.
+  `git commit --no-verify` skips any git hook and the Claude hook does not stop it. Hardening the rest (env prefixes,
+  `bash -c`, combined flags for the other rules) is still to do.
 
 ### `gates` used to skip a last line with no trailing newline
 - **Symptom:** a failing gate at the end of `gates.conf` was never run, and the script exited 0.

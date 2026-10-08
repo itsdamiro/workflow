@@ -49,7 +49,8 @@ template/adopt.sh <path-to-project> --name "<Project Name>"     # add --gemini f
 template/adopt.sh <path-to-project> --check                     # later: report drift from the template, change nothing
 ```
 
-It creates what is missing, never overwrites, and adds the ignore block for assistant files. Then:
+It creates what is missing, never overwrites, adds the ignore block for assistant files, and installs a `commit-msg` git
+hook that refuses an attribution trailer, whatever tool made the commit. Then:
 
 1. Fill in the blanks in `CLAUDE.md` and `scripts/gates.conf` (one check per line: `name | directory | command`), and run
    `scripts/gates` until it shows what you expect.
