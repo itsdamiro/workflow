@@ -1,0 +1,12 @@
+
+# AI assistant & editor tooling — never committed
+.agents/
+.claude/
+.gemini/
+.cursor/
+CLAUDE.md
+GEMINI.md
+AGENTS.md
+
+# Local-only working state
+docs/HANDOFF.md

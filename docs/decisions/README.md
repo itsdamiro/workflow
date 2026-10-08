@@ -1,0 +1,13 @@
+# Decision records
+
+Lightweight records for anything durable. Format: `TEMPLATE.md`. Standard: `docs/CODE_QUALITY_STANDARDS.md` §9.
+
+| # | Decision | Status |
+|---|---|---|
+| [001](001-context-length-not-code-graphs.md) | Spend effort on session length, not on a code graph | Accepted |
+| [002](002-portable-by-layers.md) | Portable by layers: files and scripts, procedures, optional adapters | Accepted |
+| [003](003-vault-is-personal-output.md) | The repo is the source of truth; the vault is personal output | Accepted |
+| [004](004-vault-notes-names-frontmatter-tags.md) | Vault notes: names, frontmatter, links, tags | Accepted (tombstones and redirects proposed) |
+| [005](005-one-handoff-command.md) | One `/handoff` procedure closes a slice | Proposed |
+| [006](006-pattern-scan-every-handoff.md) | Scan each slice's diff for reusable patterns | Accepted |
+| [007](007-graphify-optional-later.md) | Graphify is not part of the core; try it later for outside sources | Proposed |
