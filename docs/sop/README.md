@@ -8,5 +8,6 @@ Step-by-step runbooks any assistant can follow. Capabilities, not one tool's ver
 | [check-a-handoff.md](check-a-handoff.md) | test a handoff with a fresh reader |
 | [write-an-adr.md](write-an-adr.md) | write a decision record before the code; amend, supersede, remove |
 | [start-a-fresh-session.md](start-a-fresh-session.md) | when to restart, and how to begin from the handoff |
+| [rename-a-concept.md](rename-a-concept.md) | name a concept, and rename one without breaking the records |
 | [weekly-connect-pass.md](weekly-connect-pass.md) | five minutes a week: links, Inbox, ideas, vocabulary |
 | [adopt-the-template.md](adopt-the-template.md) | install once per machine; adopt per project |

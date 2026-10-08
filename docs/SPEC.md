@@ -55,6 +55,8 @@ Each top-level folder has a definition note named after the folder (`Projects/Pr
 
 **Renames and removals.** A renamed slug leaves a one-line redirect note at the old name. A removed ADR leaves a tombstone card (status removed, date, one line why) so links to it still resolve.
 
+**Concept names** (ADR 011). A concept is a singular noun phrase in sentence case (`Pattern scan`), and its note may list old names under `aliases:`. An ADR's `concepts:` line names the note or an alias; an alias gives a warning that names the current name, and a name that matches nothing is an error with a "did you mean" hint. Renaming: `docs/sop/rename-a-concept.md`.
+
 **Frontmatter, on every note.**
 
 ```yaml
@@ -73,7 +75,7 @@ tags: [type/decision, status/accepted, project/workflow]
 
 **Tags.** Lowercase, namespaced, kebab-case: `type/`, `status/`, `project/`, `topic/`, `lang/`, `source/`. The sync adds the structural tags from the fields; the owner adds `topic/` tags. A `Tags` note lists the allowed namespaces and the lint rejects others. Rule: if you would write about it, it is a concept; if you would only filter or count by it, it is a tag.
 
-**Lint** (`scripts/vault_lint.py`, ADR 010; a failing lint is reported, never silently fixed). Errors, which fail the run: unreadable or missing frontmatter fields, an unknown type or status, a link that does not resolve, a tag outside the vocabulary, two notes with one name, a concept with no note in `Concepts/`. Warnings, which nudge and never fail the run: a note with no links, an orphan outside `Inbox/`, a note with no tags (or no `topic/` tag), a `topic/` tag neither listed in `Tags.md` nor a note, a generated card with no date.
+**Lint** (`scripts/vault_lint.py`, ADR 010; a failing lint is reported, never silently fixed). Errors, which fail the run: unreadable or missing frontmatter fields, an unknown type or status, a link that does not resolve, a tag outside the vocabulary, two notes with one name, a concept with no note in `Concepts/`. Warnings, which nudge and never fail the run: a note with no links, an orphan outside `Inbox/`, a note with no tags (or no `topic/` tag), a `topic/` tag neither listed in `Tags.md` nor a note, a generated card with no date, a concept named by an old alias (ADR 011).
 
 ## 5. ADR format
 

@@ -73,3 +73,7 @@ The first run reports the missing concept notes and whatever the owner's hand-wr
   - **Smaller.** Hidden files are skipped like hidden folders. A `project/` tag matches its folder whatever the case. A topic used twice in one note names the note once, and a badly written topic (`topic/Zzz`) is only a `bad-tag`.
   - **Known gaps, left on purpose:** fences inside blockquotes, `%% comments %%` and links split over two lines are read as Obsidian would not.
 - A second reader, for over-engineering, found one bug (an empty `status/` line in `Tags.md` swallowed the next line as its values) and six small trims, all applied.
+
+## Amendment (2026-10-08): concept aliases
+
+- ADR 011 adds the warning `old-concept-name` (an ADR names a concept by an alias listed on the concept note), a "did you mean" hint on `missing-concept`, and `duplicate-name` for an ambiguous alias. The sentence "every concept a card names has no note" above describes the first run only.

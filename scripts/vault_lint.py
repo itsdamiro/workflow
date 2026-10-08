@@ -5,13 +5,15 @@ Usage: python3 scripts/vault_lint.py <vault-path> [--inbox-days N]
 
 Reads every *.md under the vault except hidden folders. Errors (bad frontmatter, a missing field, an unknown type or
 status, a broken link, a bad tag, a duplicate name, a concept without a note) make the exit code 1. Warnings (no links,
-an orphan, no tags, an unlisted topic, a generated card with no date) nudge and never fail the run. Exit 2 is a usage
+an orphan, no tags, an unlisted topic, a generated card with no date, a concept named by an old alias) nudge and never
+fail the run. Exit 2 is a usage
 error, including a vault with no Tags.md or one that does not list the values of type/ and status/.
 """
 
 from __future__ import annotations
 
 import argparse
+import difflib
 import os
 import re
 import sys
@@ -172,6 +174,31 @@ def link_targets(note: Note) -> list[tuple[str, bool]]:
     return [(name, from_concepts) for name, from_concepts in found + [(n, True) for n in concept_names(note)] if name]
 
 
+def concept_index(notes: list[Note], by_name: dict[str, list[Note]]) -> tuple[dict[str, str], list[Finding]]:
+    """Folded concept name or alias -> the name of the concept note, and the findings about ambiguous aliases."""
+    concepts = {fold(n.name): n.name for n in notes if n.path.startswith("Concepts/")}
+    findings, owner = [], {}
+    for note in sorted((n for n in notes if n.path.startswith("Concepts/") and not n.problem), key=lambda n: n.path):
+        for alias in dict.fromkeys(fold(str(a)) for a in as_list(note.fields.get("aliases"))):
+            if alias == fold(note.name):
+                continue
+            if alias in by_name:
+                findings.append(Finding(note.path, "error", "duplicate-name",
+                                        f"alias {alias!r} is also the name of {by_name[alias][0].path}"))
+            elif alias in owner:
+                findings.append(Finding(note.path, "error", "duplicate-name",
+                                        f"alias {alias!r} is also an alias of {owner[alias]}"))
+            else:
+                owner[alias] = note.path
+                concepts[alias] = note.name
+    return concepts, findings
+
+
+def did_you_mean(name: str, concepts: dict[str, str]) -> str:
+    close = difflib.get_close_matches(name, list(concepts), n=1, cutoff=0.6)
+    return f"; did you mean [[{concepts[close[0]]}]]?" if close else ""
+
+
 def read_tags(text: str) -> Tags:
     namespaces, closed = set(), {}
     for ns, rest in NAMESPACE_LINE.findall(text):
@@ -253,15 +280,23 @@ def lint(root: str, inbox_days: int = INBOX_DAYS, now: float | None = None) -> l
         by_name.setdefault(fold(note.name), []).append(note)
     findings = [Finding(other.path, "error", "duplicate-name", f"same name as {group[0].path}")
                 for group in by_name.values() for other in group[1:]]
-    concepts = {fold(n.name) for n in notes if n.path.startswith("Concepts/")}
+    concepts, alias_findings = concept_index(notes, by_name)
+    findings += alias_findings
     linked: set[str] = set()
     topics: dict[str, dict[str, None]] = {}
     for note in notes:
         findings += check_fields(note, tags) + ([] if note.problem else check_tags(note, tags, projects))
         resolved = set()
         for name, from_concepts in link_targets(note):
-            if from_concepts and name not in concepts:
-                findings.append(Finding(note.path, "error", "missing-concept", f"{name} has no note in Concepts/"))
+            if from_concepts:
+                current = concepts.get(name)
+                if current is None:
+                    findings.append(Finding(note.path, "error", "missing-concept",
+                                            f"{name} has no note in Concepts/{did_you_mean(name, concepts)}"))
+                elif fold(current) != name:
+                    findings.append(Finding(note.path, "warning", "old-concept-name",
+                                            f"{name} is an alias; use [[{current}]]"))
+                    name = fold(current)
             if name in by_name:
                 resolved.add(name)
             elif not from_concepts and not FILE_NAME.search(name):  # a file such as pic.png is not checked

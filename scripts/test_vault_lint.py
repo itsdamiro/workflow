@@ -566,6 +566,91 @@ class Nudges(VaultCase):
         self.assertNotIn("N5.md", detail)
 
 
+class ConceptAliases(VaultCase):
+    """ADR 011: a concept note may list old names under aliases; a name that matches nothing gets a hint."""
+
+    def concept(self, name, aliases=None, **extra):
+        text = fm(type="concept", tags="[type/concept, topic/mind]", projects=None, aliases=aliases, **extra)
+        return self.write(f"Concepts/{name}.md", text + "[[Idea]]\n")
+
+    def test_an_alias_resolves_with_a_warning_that_names_the_current_name(self):
+        self.concept("Pattern scan", "[patterns]")
+        self.write("A.md", fm(concepts="[patterns]"))
+        self.assertEqual(self.hits("missing-concept"), [])
+        found = self.hits("old-concept-name", "A.md")
+        self.assertEqual([(f.severity, f.detail) for f in found], [("warning", "patterns is an alias; use [[Pattern scan]]")])
+
+    def test_the_current_name_is_not_warned_about(self):
+        self.concept("Pattern scan", "[patterns]")
+        self.write("A.md", fm(concepts='["[[Pattern scan]]"]'))
+        self.assertEqual(self.hits("old-concept-name"), [])
+        self.assertEqual(self.hits("missing-concept"), [])
+
+    def test_a_concept_used_only_by_alias_is_not_an_orphan(self):
+        self.concept("Pattern scan", "[patterns]")
+        self.write("A.md", fm(concepts="[patterns]"))
+        self.assertEqual(self.hits("orphan", "Concepts/Pattern scan.md"), [])
+
+    def test_aliases_compare_without_case_and_accept_block_lists_and_links(self):
+        self.concept("Pattern scan", "\n  - Old Name\n  - Other")
+        self.write("A.md", fm(concepts='["[[old name|x]]", OTHER]'))
+        self.assertEqual(len(self.hits("old-concept-name", "A.md")), 2)
+        self.assertEqual(self.hits("missing-concept"), [])
+
+    def test_an_alias_does_not_make_a_body_link_resolve(self):
+        self.concept("Pattern scan", "[patterns]")
+        self.write("A.md", fm() + "[[patterns]]\n")
+        self.assertEqual(len(self.hits("broken-link", "A.md")), 1)
+
+    def test_aliases_outside_concepts_do_not_count(self):
+        self.write("Other.md", fm(aliases="[ghost]"))
+        self.write("A.md", fm(concepts="[ghost]"))
+        self.assertEqual(len(self.hits("missing-concept", "A.md")), 1)
+
+    def test_an_alias_equal_to_another_notes_name_is_an_error_and_is_not_used(self):
+        self.concept("Pattern scan", "[idea]")
+        self.write("A.md", fm(concepts="[idea]"))
+        found = self.hits("duplicate-name", "Concepts/Pattern scan.md")
+        self.assertEqual([f.severity for f in found], ["error"])
+        self.assertIn("Idea.md", found[0].detail)
+        self.assertEqual(len(self.hits("missing-concept", "A.md")), 1)
+
+    def test_an_alias_listed_by_two_concepts_is_an_error_on_the_later_one(self):
+        self.concept("Alpha", "[shared]")
+        self.concept("Beta", "[shared]")
+        found = self.hits("duplicate-name")
+        self.assertEqual([f.path for f in found], ["Concepts/Beta.md"])
+        self.assertIn("Concepts/Alpha.md", found[0].detail)
+
+    def test_an_alias_equal_to_its_own_name_is_ignored(self):
+        self.concept("Pattern scan", "[pattern scan, patterns, patterns]")
+        self.write("A.md", fm(concepts='["[[Pattern scan]]"]'))
+        self.assertEqual(self.hits("duplicate-name"), [])
+        self.assertEqual(self.hits("old-concept-name"), [])
+
+    def test_a_missing_concept_gets_the_closest_name_as_a_hint(self):
+        self.concept("Pattern scan", "[patterns]")
+        self.write("A.md", fm(concepts='[pattern scn, "[[Pattern]]"]'))
+        details = sorted(f.detail for f in self.hits("missing-concept", "A.md"))
+        self.assertEqual(details, ["pattern has no note in Concepts/; did you mean [[Pattern scan]]?",
+                                   "pattern scn has no note in Concepts/; did you mean [[Pattern scan]]?"])
+
+    def test_a_missing_concept_far_from_every_name_has_no_hint(self):
+        self.concept("Pattern scan", "[patterns]")
+        self.write("A.md", fm(concepts="[ghost]"))
+        self.assertEqual([f.detail for f in self.hits("missing-concept", "A.md")], ["ghost has no note in Concepts/"])
+
+    def test_the_hint_names_the_note_when_the_closest_match_is_an_alias(self):
+        self.concept("Pattern scan", "[patterns list]")
+        self.write("A.md", fm(concepts="[patterns lst]"))
+        self.assertTrue(self.hits("missing-concept", "A.md")[0].detail.endswith("did you mean [[Pattern scan]]?"))
+
+    def test_a_concept_note_with_unreadable_frontmatter_gives_no_aliases(self):
+        self.write("Concepts/Bad.md", "---\ntype: concept\naliases: [open]\nnot a field\n---\n")
+        self.write("A.md", fm(concepts="[open]"))
+        self.assertEqual(len(self.hits("missing-concept", "A.md")), 1)
+
+
 class Command(VaultCase):
     def run_cli(self, *args):
         out = io.StringIO()

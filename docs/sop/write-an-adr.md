@@ -6,7 +6,7 @@ For any assistant. Write one when a change adds a dependency, or a decision will
 
 1. **Take the next number.** Look at `docs/decisions/README.md`; use the next unused number, three digits.
 2. **Copy the template.** `docs/decisions/TEMPLATE.md` to `docs/decisions/NNN-short-slug.md`. The slug is lowercase words joined by hyphens; the vault card name is built from it, so keep it short and free of punctuation.
-3. **Fill the frontmatter.** `type: decision`, `status: proposed`, `date`, `projects`, `concepts` (names that exist in the vault's `Concepts/` folder, or none), `amends` and `supersedes` (ADR numbers), and the structural tags.
+3. **Fill the frontmatter.** `type: decision`, `status: proposed`, `date`, `projects`, `concepts` (names of notes in the vault's `Concepts/` folder, written as the note is named, or none; a new concept follows `docs/sop/rename-a-concept.md` for its name), `amends` and `supersedes` (ADR numbers), and the structural tags.
 4. **Write the summary.** Three lines at most, at the top: what was decided, why, what it costs.
 5. **Write the sections.** Context (facts and numbers, with where they came from), Decision (in the order someone would carry it out), Consequences (easier, harder, left open), Alternatives rejected (each with the condition under which it would become right).
 6. **Get the owner's word** on anything that is theirs to decide. Ask; do not guess. Change `status` to `accepted` only when they have said so, and add one line saying what was accepted and when.

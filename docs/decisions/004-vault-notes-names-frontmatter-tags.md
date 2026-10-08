@@ -42,3 +42,7 @@ The tombstone and redirect rules were accepted on 2026-10-08. Checked the same d
 ## Amendment (2026-10-08): the lint's severities
 
 - ADR 010 settles what the lint checks. A broken link, a missing field, a bad tag and a missing concept note are errors. A note with no links, an orphan and a note with no tags are warnings, by the owner's word: orphans are tolerated, but notes should try to link and be tagged.
+
+## Amendment (2026-10-08): concept names
+
+- Concept notes are named in readable sentence case and may list old names under `aliases:`; see ADR 011. The sentence-name rule above is for decision cards.
