@@ -243,6 +243,143 @@ class Cards(Base):
         self.assertLessEqual(len(summary), v.SUMMARY_MAX + 1)
 
 
+GOTCHAS = "# Gotchas and recipes\n\n## 1. Traps\n\n### A trap\n- **Symptom:** it breaks.\n- **Do this:** fix it.\n"
+
+
+class Gotchas(Base):
+    path = "docs/reference/GOTCHAS.md"
+
+    def note_path(self, name="demo"):
+        return os.path.join(self.vault, "Projects", name, f"{name} - Gotchas.md")
+
+    def commit_gotchas(self, text=GOTCHAS, date="2026-01-02T12:00:00+0000"):
+        put(self.repo, self.path, text)
+        git(self.repo, "add", self.path)
+        env = {**os.environ, "GIT_AUTHOR_DATE": date, "GIT_COMMITTER_DATE": date}
+        subprocess.run(["git", "-C", self.repo, "commit", "-q", "-m", "gotchas"], env=env, check=True)
+
+    def test_the_committed_file_is_mirrored_unchanged_with_a_footer(self):
+        self.commit_gotchas()
+        self.sync()
+        text = read(self.note_path())
+        fm, body = v.parse_frontmatter(text)
+        self.assertEqual((fm["type"], fm["status"], fm["generated"], fm["source"]), ("reference", "active", "true", self.path))
+        self.assertEqual(fm["tags"], ["type/reference", "status/active", "project/demo"])
+        self.assertTrue(body.startswith(GOTCHAS))
+        self.assertIn("\n\n---\nProject: [[demo]]", body[len(GOTCHAS) - 1:])
+        self.assertIn(f"`{self.path}` at `", body[len(GOTCHAS):])
+
+    def test_created_is_the_day_the_file_was_first_committed_not_the_sync_day(self):
+        self.commit_gotchas(date="2026-01-02T12:00:00+0000")
+        self.commit_gotchas(GOTCHAS + "\nMore.\n", date="2026-03-04T12:00:00+0000")
+        self.sync(today="1999-01-01")
+        self.assertEqual(v.parse_frontmatter(read(self.note_path()))[0]["created"], "2026-01-02")
+
+    def test_a_project_with_no_committed_file_gets_no_note_and_no_complaint(self):
+        report = self.sync()
+        self.assertFalse(os.path.exists(self.note_path()))
+        self.assertEqual(report.refused, [])
+
+    def test_a_local_only_file_is_not_mirrored(self):
+        put(self.repo, self.path, GOTCHAS)  # on disk, never committed
+        report = self.sync()
+        self.assertFalse(os.path.exists(self.note_path()))
+        self.assertEqual(report.refused, [])
+
+    def test_only_the_committed_text_is_mirrored(self):
+        self.commit_gotchas()
+        put(self.repo, self.path, GOTCHAS + "\nDRAFT line.\n")  # edited, not committed
+        self.sync()
+        self.assertNotIn("DRAFT", read(self.note_path()))
+
+    def test_a_second_sync_changes_nothing_and_a_dry_run_writes_nothing(self):
+        self.commit_gotchas()
+        self.sync(dry=True)
+        self.assertFalse(os.path.exists(self.note_path()))
+        self.sync()
+        self.assertEqual(self.sync().updated, [])
+
+    def test_a_changed_file_updates_the_note(self):
+        self.commit_gotchas()
+        self.sync()
+        self.commit_gotchas(GOTCHAS + "\nA new trap.\n")
+        self.assertEqual(self.sync().updated, ["Projects/demo/demo - Gotchas.md"])
+        self.assertIn("A new trap.", read(self.note_path()))
+
+    def test_a_hand_written_note_at_that_name_is_left_alone(self):
+        self.commit_gotchas()
+        os.makedirs(os.path.dirname(self.note_path()))
+        with open(self.note_path(), "w", encoding="utf-8") as f:
+            f.write("---\ntype: reference\n---\nMine.\n")
+        report = self.sync()
+        self.assertEqual(read(self.note_path()), "---\ntype: reference\n---\nMine.\n")
+        self.assertEqual([label for label, _ in report.refused], ["Projects/demo/demo - Gotchas.md"])
+
+    def test_a_name_already_used_elsewhere_in_the_vault_is_refused(self):
+        self.commit_gotchas()
+        put(self.vault, "Elsewhere/demo - Gotchas.md", "---\ntype: reference\n---\nMine.\n")
+        report = self.sync()
+        self.assertFalse(os.path.exists(self.note_path()))
+        self.assertEqual([label for label, _ in report.refused], ["demo - Gotchas"])
+
+    def test_a_file_removed_from_the_branch_leaves_the_old_note(self):
+        self.commit_gotchas()
+        self.sync()
+        git(self.repo, "rm", "-q", self.path)
+        commit(self.repo, "drop")
+        self.sync()
+        self.assertTrue(os.path.exists(self.note_path()))
+
+    def test_a_new_hub_links_to_the_note_only_when_there_is_one(self):
+        self.sync()
+        self.assertNotIn("Gotchas", read(os.path.join(self.vault, "Projects", "demo", "demo.md")))
+        os.remove(os.path.join(self.vault, "Projects", "demo", "demo.md"))
+        self.commit_gotchas()
+        self.sync()
+        self.assertIn("[[demo - Gotchas]]", read(os.path.join(self.vault, "Projects", "demo", "demo.md")))
+
+    def test_created_survives_a_move_of_the_file(self):
+        put(self.repo, "GOTCHAS.md", GOTCHAS)
+        git(self.repo, "add", "GOTCHAS.md")
+        env = {**os.environ, "GIT_AUTHOR_DATE": "2026-01-02T12:00:00+0000", "GIT_COMMITTER_DATE": "2026-01-02T12:00:00+0000"}
+        subprocess.run(["git", "-C", self.repo, "commit", "-q", "-m", "first"], env=env, check=True)
+        os.makedirs(os.path.join(self.repo, "docs", "reference"))
+        git(self.repo, "mv", "GOTCHAS.md", self.path)
+        env = {**os.environ, "GIT_AUTHOR_DATE": "2026-05-06T12:00:00+0000", "GIT_COMMITTER_DATE": "2026-05-06T12:00:00+0000"}
+        subprocess.run(["git", "-C", self.repo, "commit", "-q", "-m", "move"], env=env, check=True)
+        self.sync(today="1999-01-01")
+        self.assertEqual(v.parse_frontmatter(read(self.note_path()))[0]["created"], "2026-01-02")
+
+    def test_a_symlink_or_directory_at_the_path_is_refused_and_the_rest_still_syncs(self):
+        os.makedirs(os.path.join(self.repo, "docs", "reference"))
+        os.symlink("elsewhere.md", os.path.join(self.repo, self.path))
+        commit(self.repo, "link")
+        report = self.sync()
+        self.assertFalse(os.path.exists(self.note_path()))
+        self.assertEqual([label for label, _ in report.refused], ["demo - Gotchas"])
+        self.assertEqual(len(os.listdir(self.cards)), 3)
+
+    def test_a_file_with_its_own_frontmatter_is_refused(self):
+        self.commit_gotchas("---\ntype: x\n---\n" + GOTCHAS)
+        report = self.sync()
+        self.assertFalse(os.path.exists(self.note_path()))
+        self.assertEqual([label for label, _ in report.refused], ["demo - Gotchas"])
+
+    def test_an_existing_hub_is_never_edited_but_the_missing_link_is_hinted(self):
+        self.sync()
+        hub = os.path.join(self.vault, "Projects", "demo", "demo.md")
+        before = read(hub)
+        self.commit_gotchas()
+        report = self.sync()
+        self.assertEqual(read(hub), before)
+        self.assertEqual(len(report.hints), 1)
+        self.assertIn("[[demo - Gotchas]]", report.hints[0])
+        self.assertEqual(self.sync().hints, report.hints)  # still said until the owner adds the link
+        with open(hub, "a", encoding="utf-8") as f:
+            f.write("See [[demo - Gotchas]].\n")
+        self.assertEqual(self.sync().hints, [])
+
+
 class Idempotence(Base):
     def test_a_second_run_changes_nothing(self):
         self.sync()

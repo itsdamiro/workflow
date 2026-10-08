@@ -74,7 +74,7 @@ Decide first (a decision record), then build with tests, then close the slice wi
 
 ### Planned (not built)
 
-- The code map, the `GOTCHAS` mirror and the stats line for `vault_sync.py`.
+- The code map and the stats line for `vault_sync.py`.
 - `/handoff` as one command, and a reminder to use it when a session gets long (adapters for specific tools).
 - `adopt.sh` carrying the decision-record template and the procedures into new projects.
 

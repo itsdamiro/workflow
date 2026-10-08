@@ -41,7 +41,7 @@ An adapter may add convenience (a reminder, a button). It may not add behaviour 
 The central vault is `garden`, started empty on 2026-10-08. It is local with no remote; it is to be git-initialised for history (not yet done).
 
 ```
-Projects/<name>/   <name>.md (hub, yours), decisions/, <name> - Rejected ideas.md, later: Code map, GOTCHAS, stats
+Projects/<name>/   <name>.md (hub, yours), decisions/, <name> - Rejected ideas.md, <name> - Gotchas.md (when committed), later: Code map, stats
 Concepts/          one note per idea you name (the vocabulary)
 Patterns/          reusable building blocks, each citing code and any ADR
 Ideas/             your own notes
@@ -61,7 +61,7 @@ Each top-level folder has a definition note named after the folder (`Projects/Pr
 
 ```yaml
 ---
-type: decision          # decision | concept | pattern | idea | source | project | folder-definition | index | redirect
+type: decision          # decision | concept | pattern | idea | source | reference | project | folder-definition | index | redirect
 status: accepted
 created: 2026-10-08
 projects: [workflow]
@@ -89,10 +89,10 @@ A script, no model, idempotent. It reads the committed state of each project's d
 |---|---|---|
 | each ADR | a decision card: title, status, summary, amendments, rejected alternatives, link back | parsed from the headings |
 | every "Alternatives rejected" | `<name> - Rejected ideas.md` | parsed |
-| `docs/reference/GOTCHAS.md` | mirrored | copied |
+| `docs/reference/GOTCHAS.md`, if committed | `<name> - Gotchas.md` | copied as committed; a local-only file is skipped (ADR 009 amendment) |
 | module docstrings | `Code map.md` | Python first; a later version; other languages add an extractor when a project needs one |
 
-The first version (ADR 009) does the cards and the Rejected-ideas note only. Concept notes are the owner's: the cards that name a concept appear in its backlinks. The `GOTCHAS` mirror waits on a decision about local-only files.
+The first version (ADR 009) does the cards and the Rejected-ideas note only; the `GOTCHAS` mirror followed (ADR 009 amendment): it copies the file as committed, and a project where the file is local-only gets none. Concept notes are the owner's: the cards that name a concept appear in its backlinks.
 
 The script only overwrites notes marked `generated: true`. It never touches a note without the marker.
 

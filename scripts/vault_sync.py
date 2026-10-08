@@ -5,7 +5,8 @@ Usage: python3 scripts/vault_sync.py <project-path> <vault-path> [--name NAME] [
 
 Reads docs/decisions/NNN-slug.md as committed on REF (default: the local branch the remote's HEAD names, else main or
 master), through git, so a draft is never published. Writes under <vault>/Projects/NAME/: a card per record in
-decisions/, "NAME - Rejected ideas.md", and the hub NAME.md only if it is missing. Every sentence in a generated note is
+decisions/, "NAME - Rejected ideas.md", "NAME - Gotchas.md" (a copy of docs/reference/GOTCHAS.md when that file is
+committed), and the hub NAME.md only if it is missing. Every sentence in a generated note is
 text taken from a record. Only notes marked `generated: true` are replaced; nothing is deleted (a record that vanishes
 becomes a tombstone card, a renamed one leaves a redirect). Exit 0 clean, 1 if anything was refused, 2 usage error.
 """
@@ -28,6 +29,7 @@ ISO_DAY = re.compile(r"\d{4}-\d{2}-\d{2}")
 UNSAFE = re.compile(r'[\\/:*?"<>|#^\[\]]')
 STATUSES = {"proposed", "accepted", "superseded", "removed"}
 SUMMARY_MAX, BULLET_MAX, NAME_MAX = 600, 300, 80
+GOTCHAS_PATH = "docs/reference/GOTCHAS.md"
 
 
 class SyncError(Exception):
@@ -274,9 +276,17 @@ def render_rejected(project: str, records: list[dict], names: dict[int, str]) ->
     return out
 
 
-def render_hub(project: str, today: str) -> str:
+def render_gotchas(project: str, text: str, day: str, sha: str) -> str:
+    fields = [("type", "reference"), ("status", "active"), ("created", day), ("projects", flow([project])), ("source", yq(GOTCHAS_PATH)),
+              ("generated", "true"), ("tags", tags("reference", "active", project))]
+    return (frontmatter(fields) + "\n" + text.rstrip("\n") + "\n\n---\n"
+            f"Project: [[{project}]]. Generated from `{GOTCHAS_PATH}` at `{sha}`. The next sync overwrites this note; edit the file instead.\n")
+
+
+def render_hub(project: str, today: str, gotchas: bool = False) -> str:
     fields = [("type", "project"), ("status", "active"), ("created", today), ("tags", tags("project", "active", project))]
-    return frontmatter(fields) + f"\n# {project}\n\nHub for the project. Part of [[Projects]]. See [[{project} - Rejected ideas]].\n"
+    more = f" and [[{project} - Gotchas]]" if gotchas else ""
+    return frontmatter(fields) + f"\n# {project}\n\nHub for the project. Part of [[Projects]]. See [[{project} - Rejected ideas]]{more}.\n"
 
 
 # ---- writing ---------------------------------------------------------------------------------------------------------
@@ -290,6 +300,7 @@ class Report:
         self.tombstoned: list[str] = []
         self.redirected: list[str] = []
         self.refused: list[tuple[str, str]] = []
+        self.hints: list[str] = []
 
 
 def is_generated(text: str) -> bool:
@@ -352,6 +363,36 @@ def names_elsewhere(vault: str, skip_dir: str) -> dict[str, str]:
     return taken
 
 
+def taken_by(taken: dict[str, str], label: str, note: str, vault: str) -> str:
+    """The vault path of another note already using `label`, or "" when the name is free for `note`."""
+    used = taken.get(label.lower(), "")
+    return used if used != os.path.relpath(note, vault) else ""
+
+
+def mirror_gotchas(project: str, ref: str, name: str, base: str, taken: dict[str, str], vault: str, vault_real: str, dry: bool,
+                   report: Report) -> bool:
+    """Copies GOTCHAS as committed on `ref`. A project where it is not committed gets no note, and no complaint. True when the note is, or would be, in place."""
+    entry = git(project, "ls-tree", ref, "--", GOTCHAS_PATH).split("\t")[0].split()
+    if not entry:
+        return False
+    label = f"{name} - Gotchas"
+    if entry[:2] not in (["100644", "blob"], ["100755", "blob"]):
+        report.refused.append((label, f"{GOTCHAS_PATH} is not a regular file on {ref}"))
+        return False
+    note = os.path.join(base, f"{label}.md")
+    used = taken_by(taken, label, note, vault)
+    if used:
+        report.refused.append((label, f"the name is already used by {used}"))
+        return False
+    text = git(project, "show", f"{ref}:{GOTCHAS_PATH}")
+    if text.startswith("---"):
+        report.refused.append((label, f"{GOTCHAS_PATH} starts with its own frontmatter, which would make a second block in the note"))
+        return False
+    log = git(project, "log", "--follow", "--format=%H %as", ref, "--", GOTCHAS_PATH).splitlines()  # newest first; --follow reaches before a move
+    sha, days = log[0].split()[0][:8], [line.split()[1] for line in log]
+    return write_note(note, render_gotchas(name, text, min(days), sha), vault_real, dry, report)
+
+
 def sync(project: str, vault: str, name: str, ref: str | None = None, dry: bool = False, today: str | None = None) -> Report:
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._ -]*", name):
         raise SyncError(f"project name {name!r} must be letters, digits, space, dot, dash or underscore")
@@ -383,9 +424,10 @@ def sync(project: str, vault: str, name: str, ref: str | None = None, dry: bool 
             continue
         path, slug = entries[0]
         card = card_name(number, slug)
-        if card.lower() in taken:
+        used = taken_by(taken, card, os.path.join(decisions, card + ".md"), vault)
+        if used:
             held.add(number)
-            report.refused.append((card, f"the name is already used by {taken[card.lower()]}"))
+            report.refused.append((card, f"the name is already used by {used}"))
             continue
         text = git(project, "show", f"{ref}:{path}")
         records[number], names[number], paths[number] = parse_record(text, number, slug, index.get(number, "unknown")), card, path
@@ -393,14 +435,17 @@ def sync(project: str, vault: str, name: str, ref: str | None = None, dry: bool 
         sha = git(project, "log", "-1", "--format=%H", ref, "--", paths[number]).strip()[:8]
         wrote[number] = write_note(os.path.join(decisions, names[number] + ".md"), render_card(rec, name, names, sha, paths[number]), vault_real, dry, report)
     rejected = os.path.join(base, f"{name} - Rejected ideas.md")
-    used = taken.get(f"{name} - Rejected ideas".lower())
-    if used and used != os.path.relpath(rejected, vault):
+    used = taken_by(taken, f"{name} - Rejected ideas", rejected, vault)
+    if used:
         report.refused.append((f"{name} - Rejected ideas", f"the name is already used by {used}"))
     else:
         write_note(rejected, render_rejected(name, list(records.values()), names), vault_real, dry, report)
+    mirrored = mirror_gotchas(project, ref, name, base, taken, vault, vault_real, dry, report)
     hub = os.path.join(base, f"{name}.md")
     if not os.path.exists(hub) and name.lower() not in taken:  # a hub the owner keeps elsewhere is the hub
-        write_note(hub, render_hub(name, today), vault_real, dry, report)
+        write_note(hub, render_hub(name, today, mirrored), vault_real, dry, report)
+    elif mirrored and os.path.exists(hub) and f"[[{name} - Gotchas" not in read_text(hub):  # the hub is the owner's: say so, never edit it
+        report.hints.append(f"{os.path.relpath(hub, vault)} does not link to [[{name} - Gotchas]]: add the link if you want it")
 
     if os.path.isdir(decisions):
         for entry in sorted(os.listdir(decisions)):
@@ -441,6 +486,8 @@ def main(argv: list[str]) -> int:
           f"tombstoned {len(report.tombstoned)}, redirected {len(report.redirected)}, refused {len(report.refused)}")
     for label, reason in report.refused:
         print(f"refused: {label}: {reason}")
+    for hint in report.hints:
+        print(f"hint: {hint}")
     return 1 if report.refused else 0
 
 

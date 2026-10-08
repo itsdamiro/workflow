@@ -33,7 +33,7 @@ SPEC §6 sketches the sync; building it settles details the sketch left open.
 6. **Overwrite rule.** Only a note whose frontmatter says `generated: true` is replaced. Any other note in the way is left alone and reported. A write goes to a temporary file and is renamed into place; unchanged content is not rewritten.
 7. **Removals and renames.** A record that disappears becomes a tombstone card (`status: removed`, the sync date, one line); a record whose slug changed leaves the old card as a redirect note to the new one. Nothing is deleted.
 8. **Report.** Counts of created, updated, unchanged, tombstoned, redirected and refused, and each refusal with its reason. Exit 0 when nothing was refused, 1 otherwise, 2 for a usage error. `--dry-run` writes nothing and says what it would do.
-9. **Not in this version.** The `GOTCHAS` mirror (needs a decision about local-only files), the code map, generated concept notes (backlinks do that job; the owner writes concept notes), and the stats line. SPEC §6 is amended to match.
+9. **Not in this version.** The `GOTCHAS` mirror (added later, see the last amendment), the code map, generated concept notes (backlinks do that job; the owner writes concept notes), and the stats line. SPEC §6 is amended to match.
 
 ## Consequences
 
@@ -59,3 +59,11 @@ Sympose's records have no `concepts`, so its cards link to none until they are b
 ## Amendment (2026-10-08): a date on the Rejected-ideas note
 
 - The "Rejected ideas" note now carries `created`, the earliest valid `YYYY-MM-DD` date among the project's records, so the lint no longer warns about it and a second sync still leaves it unchanged. It is taken from the records, never from the day the sync runs. With no valid date among them the field is left out, as on a card.
+
+## Amendment (2026-10-08): the GOTCHAS mirror, committed text only
+
+- **Decided by the owner:** the mirror copies a project's `docs/reference/GOTCHAS.md` as committed on `REF`, and nothing else. A project where the file is local-only (not tracked) gets no mirror; the sync says nothing and the vault simply lacks the note. The rule "the sync reads committed state only" has no exception. Working-tree reading stays rejected (see above) and would need its own decision.
+- **The note** is `<name> - Gotchas.md` under `Projects/<name>/`, `type: reference` (a new note type, added to the vocabulary with this amendment), `status: active`, `created` the day the file was first committed (never the sync date), `source` the file's path, `generated: true`. Its body is the file's text unchanged, then one footer line naming the hub, the path and the commit. A newly made hub links to it.
+- **The same rules as a card:** only a `generated: true` note is replaced, a name already used elsewhere in the vault is refused, a second run changes nothing. If the file is later removed from the branch, the old note stays (nothing is deleted); the owner removes it.
+- **Edge cases (from the code review):** `created` follows the file across a move (`git log --follow`, the earliest date). An entry at the path that is not a regular file (a directory, symlink or submodule) is refused with a reason, and the rest of the sync still runs. A file that starts with its own frontmatter is refused, since the note would carry two blocks. Links and tags inside the file are copied as written. An existing hub is the owner's and is never edited: when it lacks the link the report prints a `hint:` line, which does not change the exit code.
+- This closes item 9's deferral for the mirror. The code map and the stats line remain open.
