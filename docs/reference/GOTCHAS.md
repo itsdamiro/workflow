@@ -17,13 +17,14 @@
 
 ### The git-safety hook is a guard against accidents, not a lock
 - **Symptom:** a command the policy forbids runs without the hook stopping it.
-- **Cause:** the hook reads the first word of each shell segment and long flags. These slip through (tested): a leading
-  `VAR=1 git ...`, `env git ...`, `bash -c 'git add .'`, a combined short flag such as `git commit -sm x`, and a message
-  read from a file (`git commit -F msg.txt`, never scanned for a trailer). Input that is not valid JSON lets the command run.
-- **Do this:** the no-trailer rule is also enforced by git itself: `template/git-hooks/commit-msg` (installed by `adopt.sh`)
-  sees the final message however it was given, so `-sm`, `-F` and a wrapped command no longer slip a trailer through.
-  `git commit --no-verify` skips any git hook and the Claude hook does not stop it. Hardening the rest (env prefixes,
-  `bash -c`, combined flags for the other rules) is still to do.
+- **Cause:** the hook reads the command's text, not what it will do. It reads through leading `VAR=1`, `env`, `sudo` and
+  similar wrappers, `bash -c '...'` and `eval "..."` strings, a leading `(` or `{`, combined short flags (`-sm`, `-fu`) and
+  the file given to `git commit -F`. It still misses a command built at run time (`$(...)`, a script file), a wrapper with
+  an option that takes a value (`sudo -u x git ...`), `git -C <other> commit -F <relative file>`, and `--no-verify`.
+  Input that is not valid JSON lets the command run, on purpose: a guard that can wedge every command is worse than a gap.
+- **Do this:** the backstop for the no-trailer rule is git itself: `template/git-hooks/commit-msg` (installed by
+  `adopt.sh`) sees the final message however it was given. `git commit --no-verify` skips any git hook. Before a push,
+  `git log --format=%B` shows what is about to go out.
 
 ### `gates` used to skip a last line with no trailing newline
 - **Symptom:** a failing gate at the end of `gates.conf` was never run, and the script exited 0.
