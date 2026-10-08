@@ -37,4 +37,10 @@
 
 ## 2. Recipes
 
-None yet. The context-length measurement (ADR 001) becomes the first one once its scripts are saved here.
+### Re-run the context measurement (ADR 001)
+```
+python3 adapters/claude/context-report/context_report.py ~/.claude/projects/<project-folder>
+```
+Prints session length, context size and what a cap of 150k, 200k and 300k would save (`--caps`, `--restart-extra`).
+Aggregates only. Claude Code transcripts only, main thread only. It does not reproduce ADR 001's split of reads by kind;
+count image reads by number when you add that.

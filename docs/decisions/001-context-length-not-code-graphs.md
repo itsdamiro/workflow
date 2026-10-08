@@ -45,8 +45,9 @@ vault. Do not adopt a code graph for token savings.
 
 ## Consequences
 
-Savings depend on the owner restarting at slice boundaries; the guard only reminds. The measurement method should be kept
-as a script so it can be re-run on other projects and models.
+Savings depend on the owner restarting at slice boundaries; the guard only reminds. The measurement is kept as a script,
+`adapters/claude/context-report`, so it can be re-run on other projects (it reads Claude Code transcripts only; other
+models need their own reader).
 
 ## Alternatives rejected
 
