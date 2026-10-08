@@ -579,7 +579,7 @@ class NarrowTopics(VaultCase):
         self.decision("D2", "Cost", "money")
         found = self.hits("narrow-topic")
         self.assertEqual([(f.path, f.severity) for f in found], [("Tags.md", "warning")])
-        self.assertIn("topic/money spans one concept (cost) over 2 decisions", found[0].detail)
+        self.assertIn("topic/money spans one concept (Cost) over 2 decisions", found[0].detail)
 
     def test_a_topic_over_two_concepts_is_fine(self):
         self.decision("D1", "Cost", "money")
@@ -589,6 +589,22 @@ class NarrowTopics(VaultCase):
     def test_one_card_cannot_show_a_topic_is_narrow(self):
         self.decision("D1", "Cost", "money")
         self.assertEqual(self.hits("narrow-topic"), [])
+
+    def test_a_concept_and_its_alias_are_one_concept(self):
+        self.write("Concepts/Cost.md", fm(type="concept", aliases="[Spend]", tags="[type/concept, status/draft, topic/mind]"))
+        for name, concept in (("D1", "Cost"), ("D2", "Spend")):
+            self.write("Projects/alpha/%s.md" % name, fm(
+                type="decision", concepts='["[[%s]]"]' % concept, tags="[type/decision, status/draft, topic/money]"))
+        found = self.hits("narrow-topic")
+        self.assertEqual(len(found), 1)
+        self.assertIn("spans one concept (Cost)", found[0].detail)
+
+    def test_a_card_with_no_concepts_does_not_count_as_one(self):
+        self.decision("D1", "Cost", "money")
+        self.write("Projects/alpha/D2.md", fm(type="decision", concepts="[]", tags="[type/decision, status/draft, topic/money]"))
+        self.write("Projects/alpha/D3.md", fm(type="decision", concepts="[]", tags="[type/decision, status/draft, topic/other]"))
+        self.assertEqual(len(self.hits("narrow-topic")), 1)  # money: D1 names Cost, D2 names nothing
+        self.assertEqual([f for f in self.hits("narrow-topic") if "topic/other" in f.detail], [])
 
     def test_only_decision_cards_count(self):
         self.write("Concepts/Cost.md", fm(type="concept", tags="[type/concept, status/draft, topic/money]"))

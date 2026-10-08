@@ -46,3 +46,7 @@ The tombstone and redirect rules were accepted on 2026-10-08. Checked the same d
 ## Amendment (2026-10-08): concept names
 
 - Concept notes are named in readable sentence case and may list old names under `aliases:`; see ADR 011. The sentence-name rule above is for decision cards.
+
+## Amendment (2026-10-08): who writes the topics
+
+- The line above that the owner adds `topic/` tags is replaced: each record's author writes its `topic/` tags, at least one, from the list in `Tags.md` and never a concept's own name. The shape check enforces it and the lint warns on a topic that spans one concept; see the amendments to ADR 010 and ADR 012.

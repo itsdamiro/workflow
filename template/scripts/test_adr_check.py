@@ -132,6 +132,11 @@ class Shape(Case):
         self.put("001-a-good-record.md", GOOD.replace("topic/cost", "topic/pattern-scan, topic/cost"))
         self.assertTrue(self.has("topic/pattern-scan only repeats a concept"))
 
+    def test_the_topic_check_runs_even_when_the_status_is_wrong(self):
+        self.put("001-a-good-record.md", GOOD.replace("status: accepted", "status: acepted").replace(", topic/cost", ""))
+        self.assertTrue(self.has("status 'acepted' is not one of"))
+        self.assertTrue(self.has("no topic/ tag"))
+
     def test_a_topic_equal_to_another_records_concept_is_fine(self):
         self.put("001-a-good-record.md", GOOD.replace("topic/cost", "topic/handoff"))
         self.assertEqual(self.found(), [])

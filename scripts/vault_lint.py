@@ -5,9 +5,9 @@ Usage: python3 scripts/vault_lint.py <vault-path> [--inbox-days N]
 
 Reads every *.md under the vault except hidden folders. Errors (bad frontmatter, a missing field, an unknown type or
 status, a broken link, a bad tag, a duplicate name, a concept without a note) make the exit code 1. Warnings (no links,
-an orphan, no tags, an unlisted topic, a topic that spans one concept, a generated card with no date, a concept named by an old alias) nudge and never
-fail the run. Exit 2 is a usage
-error, including a vault with no Tags.md or one that does not list the values of type/ and status/.
+an orphan, no tags, an unlisted topic, a topic that spans one concept, a generated card with no date, a concept named
+by an old alias) nudge and never fail the run. Exit 2 is a usage error,
+including a vault with no Tags.md or one that does not list the values of type/ and status/.
 """
 
 from __future__ import annotations
@@ -284,7 +284,7 @@ def lint(root: str, inbox_days: int = INBOX_DAYS, now: float | None = None) -> l
     findings += alias_findings
     linked: set[str] = set()
     topics: dict[str, dict[str, None]] = {}
-    spans: dict[str, dict[str, set]] = {}  # topic -> decision card -> the concepts it names
+    spans: dict[str, dict[str, set]] = {}  # topic -> decision card -> the concept notes it names (aliases resolved)
     for note in notes:
         findings += check_fields(note, tags) + ([] if note.problem else check_tags(note, tags, projects))
         resolved = set()
@@ -309,7 +309,7 @@ def lint(root: str, inbox_days: int = INBOX_DAYS, now: float | None = None) -> l
             if tag.startswith("topic/") and TAG.match(tag):
                 topics.setdefault(tag[6:], {})[note.path] = None
                 if note.fields.get("type") == "decision":
-                    spans.setdefault(tag[6:], {})[note.path] = {fold(c) for c in concept_names(note)}
+                    spans.setdefault(tag[6:], {})[note.path] = {concepts.get(fold(c), c) for c in concept_names(note)}
     for note in notes:
         if not note.path.startswith("Inbox/") and note.path != "Garden.md" and fold(note.name) not in linked:
             findings.append(Finding(note.path, "warning", "orphan", "no note links here"))
@@ -323,8 +323,8 @@ def lint(root: str, inbox_days: int = INBOX_DAYS, now: float | None = None) -> l
         named = set().union(*cards.values())
         if len(cards) > 1 and len(named) == 1:
             findings.append(Finding("Tags.md", "warning", "narrow-topic",
-                                    f"topic/{topic} spans one concept ({next(iter(named))}) over {len(cards)} decisions; "
-                                    "a topic should cut across concepts, so use the concept note instead"))
+                                    f"topic/{topic} spans one concept ({next(iter(named))}) over {len(cards)} "
+                                    "decisions; a topic should cut across concepts, so use the concept note instead"))
     return sorted(findings)
 
 
