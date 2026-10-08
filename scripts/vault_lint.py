@@ -144,7 +144,7 @@ def prose(body: str) -> str:
             fence = opening.group(1)
         else:
             kept.append(line)
-    return re.sub(r"`[^`\n]*`", "", "\n".join(kept))
+    return re.sub(r"(?<!`)(`+)(?!`)[^\n]*?(?<!`)\1(?!`)", "", "\n".join(kept))  # a code span may be delimited by several backticks, so it may hold one
 
 
 def fold(name: str) -> str:

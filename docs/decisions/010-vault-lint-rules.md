@@ -83,3 +83,8 @@ The first run reports the missing concept notes and whatever the owner's hand-wr
 - **A new warning, `narrow-topic`.** A `topic/` tag used on two or more decision cards that all name the same single concept is reported, with the concept and the card count. A topic is a question to filter by and cuts across concepts; one that spans a single concept is that concept's note again. A topic used on one card, or on cards naming two or more concepts, is not reported.
 - **Topics stay free-form** (the decision above is unchanged: no closed list). What changes is the guidance and who writes them: the record's author picks from the list in `Tags.md`, and the shape check (ADR 012 amendment) refuses a record with no topic or with one that repeats its own concept.
 - **Accepted** by the owner on 2026-10-08, in chat, after a discussion of the options (concept-derived topics, cross-cutting topics, none). Sympose's 78 records were tagged with 11 cross-cutting topics at the same time.
+
+## Amendment (2026-10-08): a code span may be delimited by several backticks
+
+- **Why:** the lint removed inline code with a pattern that allowed no backtick inside the span, so a span written with two backticks to hold one (CommonMark, and what Obsidian renders) left its contents visible, and a `[[link]]` inside it counted as a link. A commit subject with a backtick in it, copied into the stats note (ADR 014), hit this.
+- **Rule:** a run of backticks opens a span that the next run of the same length closes, on one line. The code fences and the single-backtick case are unchanged. Tested in `scripts/test_vault_lint.py`.

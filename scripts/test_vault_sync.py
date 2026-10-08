@@ -479,6 +479,28 @@ class CodeMap(Base):
             with mock.patch.object(v.ast, "parse", side_effect=error("x")):
                 self.assertEqual(v.read_docstring("x = 1\n"), ("unreadable", error.__name__))
 
+    def test_a_byte_order_mark_does_not_make_a_file_unreadable(self):
+        self.assertEqual(v.read_docstring('\ufeff"""Doc."""\n'), ("doc", "Doc."))
+        self.commit_py({"a.py": '\ufeff"""Doc."""\n'})
+        self.sync()
+        self.assertIn("Doc.", self.body())
+        self.assertNotIn("Unreadable", self.body())
+
+    def test_a_blob_git_cannot_give_is_one_gap_and_the_sync_goes_on(self):
+        self.commit_py({"a.py": '"""Fine."""\n', "b.py": '"""Also."""\n'})
+        real = v.git
+
+        def flaky(project, *args, **kw):
+            if args[0] == "show" and args[1].endswith(":b.py"):
+                raise v.SyncError("git show: missing blob")
+            return real(project, *args, **kw)
+
+        with mock.patch.object(v, "git", flaky):
+            report = self.sync()
+        self.assertEqual(report.refused, [])
+        self.assertIn("## Unreadable\n\n- `b.py`: SyncError\n", self.body())
+        self.assertIn("Fine.", self.body())
+
     def test_an_invalid_escape_in_the_source_prints_no_warning(self):
         with warnings.catch_warnings(record=True) as seen:
             warnings.simplefilter("always")

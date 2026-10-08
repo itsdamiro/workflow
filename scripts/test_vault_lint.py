@@ -115,6 +115,15 @@ class Notes(unittest.TestCase):
 
 
 class Prose(unittest.TestCase):
+    def test_a_code_span_with_several_backticks_may_hold_one(self):
+        links = lambda text: [m.group(1) for m in vl.LINK.finditer(vl.prose(text))]  # noqa: E731
+        self.assertEqual(links("a ``x`y [[In]]`` b [[Out]]"), ["Out"])
+        self.assertEqual(links("a `` `x [[In]] ` `` b [[Out]]"), ["Out"])
+        self.assertEqual(links("a `[[In]]` b ``[[In2]]`` c [[Out]]"), ["Out"])
+        self.assertEqual(links("a `x` [[Out]] `y`"), ["Out"])  # each span ends at its own closing run, not the last one on the line
+        for unmatched in ("b ```a [[X]] `` c", "b ```a [[X]] ` c", "b `a [[X]] `` c"):  # runs of different lengths do not pair
+            self.assertEqual(links(unmatched), ["X"], unmatched)
+
     def test_code_is_removed(self):
         text = "a [[Real]]\n```\n[[InFence]]\n```\nb `[[Inline]]` c\n~~~\n[[Tilde]]\n~~~\n[[After]]\n"
         links = [m.group(1) for m in vl.LINK.finditer(vl.prose(text))]

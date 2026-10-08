@@ -419,16 +419,20 @@ def mirror_gotchas(project: str, ref: str, name: str, base: str, taken: dict[str
 # ---- the code map ----------------------------------------------------------------------------------------------------
 
 
+def longest_run(text: str) -> int:
+    return max((len(r) for r in re.findall(r"`+", text)), default=0)
+
+
 def span(text: str) -> str:
     """Inline code that survives a backtick in the text."""
-    mark = "`" * (max((len(r) for r in re.findall(r"`+", text)), default=0) + 1)
+    mark = "`" * (longest_run(text) + 1)
     pad = " " if text.startswith("`") or text.endswith("`") else ""
     return f"{mark}{pad}{text}{pad}{mark}"
 
 
 def fenced(text: str) -> str:
     """A code fence longer than any backtick run in the text, so nothing inside it is a link, a tag or a heading to the lint."""
-    mark = "`" * max(3, max((len(r) for r in re.findall(r"`+", text)), default=0) + 1)
+    mark = "`" * max(3, longest_run(text) + 1)
     return f"{mark}\n{text}\n{mark}\n"
 
 
@@ -452,7 +456,7 @@ def read_docstring(source: str) -> tuple[str, str]:
     try:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")  # the project's own invalid escapes are not ours to report
-            doc = ast.get_docstring(ast.parse(source)) or ""
+            doc = ast.get_docstring(ast.parse(source.removeprefix("\ufeff"))) or ""  # Python reads a BOM as part of the encoding, but ast.parse of text does not
     except (SyntaxError, ValueError, RecursionError) as e:
         return "unreadable", type(e).__name__
     paragraph = re.split(r"\n\s*\n", doc.strip(), maxsplit=1)[0].strip()
@@ -492,12 +496,17 @@ def mirror_code_map(project: str, ref: str, name: str, base: str, taken: dict[st
     if used:
         report.refused.append((label, f"the name is already used by {used}"))
         return False
-    entries = [(path, *read_docstring(git(project, "show", f"{ref}:{path}"))) for path in files]
+    entries = []
+    for path in files:
+        try:
+            entries.append((path, *read_docstring(git(project, "show", f"{ref}:{path}"))))
+        except SyncError as e:  # a blob git cannot give us is one gap, not the end of the sync
+            entries.append((path, "unreadable", type(e).__name__))
     sha, day = code_history(project, ref, files)
     return write_note(note, render_code_map(name, entries, day, sha), vault_real, dry, report)
 
 
-def sync(project: str, vault: str, name: str, ref: str | None = None, dry: bool = False, today: str | None = None) -> Report:
+def check_inputs(project: str, vault: str, name: str) -> None:
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._ -]*", name):
         raise SyncError(f"project name {name!r} must be letters, digits, space, dot, dash or underscore")
     if not os.path.isdir(vault):
@@ -507,6 +516,10 @@ def sync(project: str, vault: str, name: str, ref: str | None = None, dry: bool 
         raise SyncError(f"{project!r} is not a git repository")
     if os.path.realpath(top) != os.path.realpath(project):
         raise SyncError(f"{project!r} is inside a repository: run it on the repository's top folder, {top!r}")
+
+
+def sync(project: str, vault: str, name: str, ref: str | None = None, dry: bool = False, today: str | None = None) -> Report:
+    check_inputs(project, vault, name)
     ref = ref or default_ref(project)
     today = today or datetime.date.today().isoformat()
     vault_real, report = os.path.realpath(vault), Report()
