@@ -21,4 +21,4 @@ For any assistant. Run it after the slice's commits have landed and the gates pa
 
 ## Adapters
 
-The Claude skill, mod button or Gemini command each say: "follow `docs/sop/handoff.md`". Nothing more.
+The Claude skill (`template/skills/handoff`, linked by `template/install.sh`), mod button or Gemini command each say: "follow `docs/sop/handoff.md`". Nothing more.
