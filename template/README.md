@@ -8,7 +8,7 @@ Version: see `VERSION` (copied into each project as `docs/.template-version`).
 
 | Layer | Lives in | Holds |
 |---|---|---|
-| Machine-wide, once | `~/.claude` (linked from here by `install.sh`) | the git-safety hook, the skills |
+| Machine-wide, once | `~/.claude` (linked from here by `install.sh`), `~/.gemini/commands` (written by it) | the git-safety hook, the skills, the Gemini `/handoff` command |
 | Template, per project | copied by `adopt.sh` | `CLAUDE.md` (a contents page), the standards, the handoff, the closing checklist, `scripts/gates`, `scripts/mutate.py`, `scripts/md_wrap_check.py`, `scripts/adr_check.py`, the record template and the vault conventions |
 | Project facts | the project itself | its gate commands, its rules, its decisions, its handoff |
 
@@ -17,7 +17,7 @@ Version: see `VERSION` (copied into each project as `docs/.template-version`).
 ```
 coding-standards/
 ├── VERSION
-├── install.sh                 once per machine: links hook + skills, adds the hook to ~/.claude/settings.json
+├── install.sh                 once per machine: links hook + skills, writes the Gemini command, adds the hook to ~/.claude/settings.json
 ├── adopt.sh                   per project: scaffold the template; --check reports drift. Never overwrites.
 ├── CLAUDE.template.md         → <project>/CLAUDE.md  (contents page, under 40 lines)
 ├── GEMINI.template.md         → <project>/GEMINI.md  (same, for Gemini)
@@ -37,6 +37,8 @@ coding-standards/
 │   ├── mutate.py                      mutation check for new tests; restores from a copy, never git
 │   ├── md_wrap_check.py               fails on hard-wrapped Markdown prose (a gate; test_md_wrap_check.py beside it)
 │   └── adr_check.py                   fails on a decision record without frontmatter, a summary or an index row (a gate; ADR 012)
+├── commands/
+│   └── handoff.toml           Gemini `/handoff`: injects docs/sop/handoff.md with a shell `cat` (an `@{}` path must be inside the workspace); install.sh fills in this checkout's path
 ├── hooks/
 │   ├── git_safety.py          PreToolUse hook; blocks the git commands that lose work or leave a trace
 │   └── test_git_safety.py     both paths of every rule (python3 -m unittest discover -s hooks)
@@ -54,7 +56,7 @@ The `.template.md` suffixes are deliberate: the machine-wide gitignore (`.gitign
 
 ```
 ./install.sh --dry-run     # see what changes
-./install.sh               # link the hook and skills, add the hook to ~/.claude/settings.json (a backup is kept)
+./install.sh               # link the hook and skills, write the Gemini command, add the hook to ~/.claude/settings.json (a backup is kept)
 ```
 
 **A new project, or one moving onto the template**

@@ -30,11 +30,12 @@ The project template, with its scripts, lives in `template/`. Everything below n
 
 ```bash
 template/install.sh --dry-run   # shows what would change; changes nothing
-template/install.sh             # links the git-safety hook and two skills into ~/.claude, and adds the hook to
+template/install.sh             # links the git-safety hook and the skills into ~/.claude, writes the Gemini /handoff
+                                # command into ~/.gemini/commands, and adds the hook to
                                 # ~/.claude/settings.json (a backup of settings.json is kept)
 ```
 
-This is for Claude Code. Other tools follow the procedures in `docs/sop/` instead. For the machine-wide ignore of assistant files, see `template/README.md`.
+The hook and the skills are for Claude Code, the command for Gemini CLI. Other tools follow the procedures in `docs/sop/` instead. For the machine-wide ignore of assistant files, see `template/README.md`.
 
 ### Start a new project
 

@@ -5,7 +5,7 @@ For any assistant, with the owner. Works for a new project and for one moving on
 ## Once per machine
 
 1. `template/install.sh --dry-run`, and read what it would change.
-2. `template/install.sh`. It links the git-safety hook and two skills into the assistant's config folder and adds the hook to its settings (a backup is kept). The links point at this checkout; run it again if the repository moves.
+2. `template/install.sh`. It links the git-safety hook and the skills into Claude Code's config folder, writes the Gemini `/handoff` command into `~/.gemini/commands` (a copy with this checkout's path filled in, never over a file you wrote), and adds the hook to Claude's settings (a backup is kept). The links and the copy point at this checkout; run it again if the repository moves.
 3. For the machine-wide ignore of assistant files, see `template/README.md`.
 
 ## Per project

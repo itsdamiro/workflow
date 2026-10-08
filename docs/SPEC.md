@@ -36,6 +36,8 @@ Stop AI-assisted projects losing their thinking between sessions, keep long sess
 
 An adapter may add convenience (a reminder, a button). It may not add behaviour that the SOP does not describe.
 
+`AGENTS.md` (local-only, on the no-trace list) is the tool-neutral twin of `CLAUDE.md`. Gemini CLI reads `GEMINI.md` by default and reads `AGENTS.md` only when `context.fileName` in its `settings.json` lists it, for example `["AGENTS.md", "GEMINI.md"]`.
+
 ## 4. The vault
 
 The central vault is `garden`, started empty on 2026-10-08. It is local with no remote; it is to be git-initialised for history (not yet done).
@@ -125,7 +127,6 @@ Language-neutral. `gates.conf` is `name | directory | command`. SOPs avoid assum
 
 ## 10. Open questions
 
-- Is `AGENTS.md` read by the tools you use? Add it to the no-trace list either way.
 - Stylo uses a journal and a wiki, not `decisions/`: write an extractor or migrate it.
 - Is `governs:` worth its upkeep?
 - Does Sympose parse the chosen tag and list syntax? Test with sample notes before fixing the format.
