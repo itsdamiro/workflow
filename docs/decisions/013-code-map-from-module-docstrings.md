@@ -1,12 +1,12 @@
 ---
 type: decision
-status: proposed
+status: accepted
 date: 2026-10-08
 projects: [workflow]
 concepts: [Vault conventions, Source of truth]
 amends: [009]
 supersedes: []
-tags: [type/decision, status/proposed, project/workflow, topic/vault, topic/architecture]
+tags: [type/decision, status/accepted, project/workflow, topic/vault, topic/architecture]
 ---
 
 # 013 — The code map is the committed Python module docstrings, copied unchanged
@@ -36,7 +36,7 @@ Facts, measured on 2026-10-08 on the committed Python of the two projects that h
 
 ## Consequences
 
-The vault gains a map the owner can trust to be only what the code says about itself. It is as good as the docstrings: Sympose's are, and a project without them gets a list of gaps, which is itself a finding. A stale docstring is shown as written, so the map can be out of date with the code it describes; the repair is to edit the docstring. The note is rebuilt on every sync and changes only when a docstring does. Open: a map of classes and functions, a `governs:` link from a record to the files it explains, and any language but Python.
+The vault gains a map the owner can trust to be only what the code says about itself. It is as good as the docstrings: Sympose's are, and a project without them gets a list of gaps, which is itself a finding. A stale docstring is shown as written, so the map can be out of date with the code it describes; the repair is to edit the docstring. The note is rebuilt on every sync and changes only when a listed file does, because the footer names the last commit that touched one. Open: a map of classes and functions, a `governs:` link from a record to the files it explains, and any language but Python.
 
 ## Alternatives rejected
 
@@ -46,3 +46,5 @@ The vault gains a map the owner can trust to be only what the code says about it
 - **A note per file.** Hundreds of generated notes would swamp the graph and the lint's orphan check. Would be right only if each file were a concept the owner writes about.
 - **Importing the module to read `__doc__`.** Runs the project's code inside a sync that must be safe to run on anything. Never right.
 - **Copying the docstring as plain text.** A `[[x]]` or `#tag` in it becomes a link or tag and can fail the lint. Fencing is cheaper than escaping.
+
+**Accepted** by the owner on 2026-10-08, in chat, as written: a paragraph of at most 600 characters per file, tests left out, the note named `<name> - Code map`.
