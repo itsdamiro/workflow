@@ -12,7 +12,7 @@ Version: see `VERSION` (copied into each project as `docs/.template-version`).
 | Layer | Lives in | Holds |
 |---|---|---|
 | Machine-wide, once | `~/.claude` (linked from here by `install.sh`) | the git-safety hook, the skills |
-| Template, per project | copied by `adopt.sh` | `CLAUDE.md` (a contents page), the standards, the handoff, the closing checklist, `scripts/gates`, `scripts/mutate.py` |
+| Template, per project | copied by `adopt.sh` | `CLAUDE.md` (a contents page), the standards, the handoff, the closing checklist, `scripts/gates`, `scripts/mutate.py`, `scripts/md_wrap_check.py` |
 | Project facts | the project itself | its gate commands, its rules, its decisions, its handoff |
 
 ## What is in here
@@ -33,7 +33,8 @@ coding-standards/
 │   └── reference/GOTCHAS.template.md  → docs/reference/GOTCHAS.md: traps and recipes (the durable half)
 ├── scripts/
 │   ├── gates (+ gates.conf.template)  every gate, one line each, failures show their last lines
-│   └── mutate.py                      mutation check for new tests; restores from a copy, never git
+│   ├── mutate.py                      mutation check for new tests; restores from a copy, never git
+│   └── md_wrap_check.py               fails on hard-wrapped Markdown prose (a gate; test_md_wrap_check.py beside it)
 ├── hooks/
 │   ├── git_safety.py          PreToolUse hook; blocks the git commands that lose work or leave a trace
 │   └── test_git_safety.py     both paths of every rule (python3 -m unittest discover -s hooks)

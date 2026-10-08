@@ -24,6 +24,7 @@ pairs=(
   "scripts/gates|scripts/gates"
   "scripts/gates.conf.template|scripts/gates.conf"
   "scripts/mutate.py|scripts/mutate.py"
+  "scripts/md_wrap_check.py|scripts/md_wrap_check.py"
 )
 [ "$gemini" = 1 ] && pairs+=("GEMINI.template.md|GEMINI.md")
 
@@ -37,7 +38,7 @@ for pair in "${pairs[@]}"; do
   else
     mkdir -p "$(dirname "$dst")"; cp "$src" "$dst"
     case "$dst" in */CLAUDE.md|*/GEMINI.md) sed -i.bak "s/\[PROJECT NAME\]/$(printf '%s' "$name" | sed 's/[\/&]/\\&/g')/" "$dst" && rm -f "$dst.bak" ;; esac
-    case "$dst" in */scripts/gates|*/scripts/mutate.py) chmod +x "$dst" ;; esac
+    case "$dst" in */scripts/gates|*/scripts/mutate.py|*/scripts/md_wrap_check.py) chmod +x "$dst" ;; esac
     echo "  created  ${pair##*|}"
   fi
 done

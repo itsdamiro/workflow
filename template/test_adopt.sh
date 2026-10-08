@@ -13,6 +13,8 @@ head -1 "$proj/CLAUDE.md" | grep -qF '# A/B & C'; ok $? "a name with / and & rea
 [ ! -e "$proj/CLAUDE.md.bak" ]; ok $? "no .bak file is left behind"
 grep -q 'CLAUDE.md' "$proj/.gitignore"; ok $? "the no-trace block is in .gitignore"
 [ -x "$proj/scripts/gates" ]; ok $? "scripts/gates is executable"
+[ -x "$proj/scripts/md_wrap_check.py" ]; ok $? "the markdown wrap checker is installed and executable"
+grep -q md_wrap_check "$proj/scripts/gates.conf"; ok $? "the wrap checker is a gate in the project's list"
 
 echo 'edited' >> "$proj/CLAUDE.md"; printf '#!/bin/sh\necho mine\n' > "$proj/.git/hooks/commit-msg"
 out="$("$here/adopt.sh" "$proj" 2>&1)"

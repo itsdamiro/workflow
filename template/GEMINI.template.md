@@ -23,6 +23,7 @@ It is a contents page: short on purpose. The substance is one level down, in the
 - No `git checkout -- <file>`, `git restore`, `git reset --hard`, `git clean -f`: undo by copying a saved backup back.
 - Stage named files only; never `git add .` or a directory that holds generated output.
 - Commits carry no attribution trailer and one author identity. Commit and push only on the owner's go-ahead.
+- Markdown prose is one paragraph or list item per line, never hard-wrapped (`scripts/md_wrap_check.py` is a gate).
 - [Add this project's own: data it must never touch, a name that must never be hard-coded, ...]
 
 ## Project-specific rules

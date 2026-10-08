@@ -13,6 +13,7 @@
 - Zero time-delay simulation
 - Evidence-based grounding
 - No AI trace in commits or the repository
+- Markdown: one paragraph per line
 
 ## Core tone & demeanor
 
@@ -112,3 +113,7 @@ repositories, not a per-project preference to re-negotiate:
   tooling directories after the fact. Confirm the exact scope before any
   such rewrite — it's destructive — but don't treat "it's already
   committed" as a reason to leave it.
+
+## Markdown: one paragraph per line
+
+Markdown prose is not hard-wrapped. A paragraph, a list item and a quote are each one line, and the editor wraps it for the reader. A hard wrap makes every edit rewrap the lines around it, so a diff shows text that did not change, and it reads badly in any window narrower or wider than the column it was cut at. Code fences, tables and frontmatter are exempt. `scripts/md_wrap_check.py` fails on a line that continues the one above it and is a gate: when editing a document, join lines rather than adding a wrap.
