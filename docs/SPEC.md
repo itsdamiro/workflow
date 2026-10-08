@@ -98,16 +98,17 @@ The script only overwrites notes marked `generated: true`. It never touches a no
 
 ## 7. `/handoff`
 
-One procedure, run after a slice's commits land (`docs/sop/handoff.md`).
+One procedure, run after a slice's commits land (`docs/sop/handoff.md`). The one slow part, the fresh-reader check, runs only when the owner types `/handoff check` (ADR 005 amendment).
 
-| Step | Who |
-|---|---|
-| run `vault-sync` and the lints | script |
-| scan the slice's diff for a reusable pattern (cites file and lines; "none" is a valid result) | model drafts, owner accepts |
-| draft `docs/HANDOFF.md` | model drafts, owner accepts |
-| check the handoff with a fresh reader and the six questions | fresh session or another model |
-| write the stats line (context size at close, slice number) | script |
-| report: synced, lint failures, what awaits acceptance | script and model |
+| Step | When | Who |
+|---|---|---|
+| check the tree is committed and the gates pass | always | script |
+| run `vault-sync` and the lints | always | script |
+| scan the slice's diff for a reusable pattern (cites file and lines; "none" is a valid result) | always | model drafts, owner accepts |
+| draft `docs/HANDOFF.md` | always | model drafts, owner accepts |
+| check the handoff with a fresh reader and the six questions | `check` | fresh session or another model |
+| write the stats line (context size at close, slice number) | planned | script |
+| report: synced, lint failures, what awaits acceptance | always | script and model |
 
 Commit and push stay the owner's call. Writing the ADR itself happens before the code and is not part of this.
 

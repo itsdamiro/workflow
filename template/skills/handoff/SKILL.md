@@ -1,11 +1,13 @@
 ---
 name: handoff
-description: Closes a slice for the vault and the next session — syncs the vault, runs the lint, drafts pattern notes and a new docs/HANDOFF.md, and has it checked by a fresh reader. Use when the user types /handoff, asks to hand off, or says the session is getting long and the slice is done.
+description: Closes a slice for the next session — checks the tree is committed and the gates pass, syncs the vault and runs the lint, scans the diff for patterns, rewrites docs/HANDOFF.md and reports. The option check adds the slow fresh-reader test of the handoff. Use when the user types /handoff, asks to hand off, or says the session is getting long and the slice is done.
 ---
 
 # Handoff
 
 The procedure is `docs/sop/handoff.md` in the workflow repository, not here: read it and follow it step by step, saying so for any step it marks *planned*.
+
+Run the check step (the fresh-reader test) only if the user typed `/handoff check`; never add it yourself, and say in the report that it was not run.
 
 To find the repository, resolve the symlink this skill folder is reached through (it points into `template/skills/handoff` of the workflow repository); the repository root is two levels up from there. The sync and the lint (`scripts/vault_sync.py`, `scripts/vault_lint.py`) are in its `scripts/`, and the project to hand off is the current working directory.
 

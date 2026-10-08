@@ -29,3 +29,9 @@ One command from the owner's side. The work inside a long session costs tokens, 
 
 - **A hook that runs it automatically.** It would act before the owner has reviewed the slice, and the draft needs acceptance.
 - **Separate commands for each part.** More to remember; the parts belong to one moment.
+
+## Amendment (2026-10-08): the fresh-reader check on request
+
+- **Why:** the first full run took about eight minutes, most of it, as far as I can tell, the fresh-reader check (a subagent per round, often two or three rounds). Run at every 150k to 200k of context, that is too much development time. The vault sync and lint take about half a second; the pattern scan reads only the slice's diff.
+- **Decided by the owner:** `/handoff` keeps the ground check, the vault sync and lint, the pattern scan, the handoff draft and the report. The fresh-reader check runs only when named: `/handoff check`. Use it after a rewrite that changed the shape of the handoff, or before another assistant takes over.
+- ADR 006 is unchanged: the pattern scan still runs at every handoff.
