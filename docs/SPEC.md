@@ -43,7 +43,7 @@ An adapter may add convenience (a reminder, a button). It may not add behaviour 
 The central vault is `garden`, started empty on 2026-10-08. It is local with no remote; it is to be git-initialised for history (not yet done).
 
 ```
-Projects/<name>/   <name>.md (hub, yours), decisions/, <name> - Rejected ideas.md, <name> - Gotchas.md (when committed), <name> - Stats.md (one row per `/handoff`)
+Projects/<name>/   <name>.md (hub, yours), decisions/, <name> - Rejected ideas.md, <name> - Gotchas.md (when committed), <name> - Stats.md (one row per `/handoff`), Captured/ (the owner's words, proposed and written on their yes, ADR 017)
 Concepts/          one note per idea you name (the vocabulary)
 Patterns/          reusable building blocks, each citing code and any ADR
 Ideas/             your own notes
@@ -63,7 +63,7 @@ Each top-level folder has a definition note named after the folder (`Projects/Pr
 
 ```yaml
 ---
-type: decision          # decision | concept | pattern | idea | source | reference | project | folder-definition | index | redirect
+type: decision          # decision | concept | pattern | idea | source | reference | project | folder-definition | index | redirect | capture
 status: accepted
 created: 2026-10-08
 projects: [workflow]
@@ -77,7 +77,7 @@ tags: [type/decision, status/accepted, project/workflow]
 
 **Tags.** Lowercase, namespaced, kebab-case: `type/`, `status/`, `project/`, `topic/`, `lang/`, `source/`. The sync adds the structural tags from the fields; each record's author writes its `topic/` tags (at least one, usually one to three, from the list in `Tags.md`, never a concept's own name; ADR 010 and 012 amendments). A `Tags` note lists the allowed namespaces and the lint rejects others. Rule: if you would write about it, it is a concept; if you would only filter or count by it, it is a tag.
 
-**Lint** (`scripts/vault_lint.py`, ADR 010; a failing lint is reported, never silently fixed). Errors, which fail the run: unreadable or missing frontmatter fields, an unknown type or status, a link that does not resolve, a tag outside the vocabulary, two notes with one name, a concept with no note in `Concepts/`. Warnings, which nudge and never fail the run: a note with no links, an orphan outside `Inbox/`, a note with no tags (or no `topic/` tag), a `topic/` tag neither listed in `Tags.md` nor a note, a topic whose decision cards all name one concept, a generated card with no date, a concept named by an old alias (ADR 011), a pattern that cites no code or code that is not in its project's repo (ADR 010, amendment of 2026-10-09: the repo is given with `--repo NAME=PATH`, which `scripts/close_slice.py` does).
+**Lint** (`scripts/vault_lint.py`, ADR 010; a failing lint is reported, never silently fixed). Errors, which fail the run: unreadable or missing frontmatter fields, an unknown type or status, a link that does not resolve, a tag outside the vocabulary, two notes with one name, a concept with no note in `Concepts/`. Warnings, which nudge and never fail the run: a note with no links, an orphan outside `Inbox/` that is not a draft, a note with no tags (or no `topic/` tag), a `topic/` tag neither listed in `Tags.md` nor a note, a topic whose decision cards all name one concept, a generated card with no date, a concept named by an old alias (ADR 011), a pattern that cites no code or code that is not in its project's repo (ADR 010, amendment of 2026-10-09: the repo is given with `--repo NAME=PATH`, which `scripts/close_slice.py` does).
 
 ## 5. ADR format
 
@@ -108,6 +108,7 @@ One procedure, run when a slice's work is done (`docs/sop/handoff.md`); it commi
 | run the gates, then commit the slice's named files | always | script and model |
 | run the vault sync, the stats line and the lint, as one script (`scripts/close_slice.py`) | always | script |
 | scan the slice's diff for a reusable pattern (cites file and lines; "none" is a valid result; drafts wait quietly) | always | model drafts, owner accepts when they choose |
+| propose captures, new notes and appended lines for the owner's side of the vault (ADR 017); written by `scripts/vault_write.py` only on the owner's yes | always | model proposes, owner approves, script writes |
 | draft `docs/HANDOFF.md` | always | model drafts, owner accepts |
 | check the handoff with a fresh reader and the six questions | full | fresh session or another model |
 | push the branch, when the lint has no error | always | script and model |

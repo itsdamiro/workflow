@@ -36,6 +36,11 @@ def fm(**fields) -> str:
     return "---\n" + "".join(f"{k}: {v}\n" for k, v in base.items() if v is not None) + "---\nBack to [[Garden]].\n"
 
 
+def kept(**fields) -> str:
+    """fm() for an accepted note: unlike a draft, it is an orphan when nothing links to it."""
+    return fm(**{"status": "accepted", "tags": "[type/idea, status/accepted, topic/mind]", **fields})
+
+
 class Values(unittest.TestCase):
     def test_plain_quoted_and_empty_scalars(self):
         self.assertEqual(vl.parse_value(" accepted "), "accepted")
@@ -283,9 +288,15 @@ class Frontmatter(VaultCase):
         self.assertEqual(self.hits("missing-field", "C.md"), [])
 
     def test_every_type_that_needs_projects_is_checked(self):
-        for kind in ("decision", "idea", "pattern", "source"):
+        for kind in ("decision", "idea", "pattern", "source", "capture"):
             self.write("A.md", fm(projects=None, type=kind))
             self.assertEqual([f.detail for f in self.hits("missing-field", "A.md")], ["projects"], kind)
+
+    def test_a_capture_passes_when_tags_md_lists_the_type(self):
+        self.write("Tags.md", TAGS.replace("idea, project", "idea, capture, project"))
+        self.write("Projects/alpha/Captured/Said.md", fm(type="capture", tags="[type/capture, status/draft, project/alpha, topic/mind]")
+                   + "> a quote\n\nAbout: [[Idea]]\n")
+        self.assertEqual([f for f in self.lint() if f.path == "Projects/alpha/Captured/Said.md"], [])
 
     def test_unknown_type_and_status(self):
         self.write("A.md", fm(type="gizmo", tags="[status/draft, topic/mind]", status="odd"))
@@ -476,16 +487,23 @@ class Nudges(VaultCase):
         self.assertEqual(self.hits("no-links"), [])
 
     def test_orphans_are_warnings_and_inbox_is_exempt(self):
-        self.write("A.md", fm())
+        self.write("A.md", fm(status="accepted", tags="[type/idea, status/accepted, topic/mind]"))
         self.write("Inbox/I.md", fm())
         found = self.hits("orphan")
         self.assertEqual([(f.path, f.severity) for f in found], [("A.md", "warning")])
 
-    def test_a_draft_pattern_waits_unlinked_but_an_accepted_one_is_an_orphan(self):
-        self.write("Patterns/Draft.md", fm(type="pattern", status="draft", tags="[type/pattern, status/draft, topic/mind]"))
-        self.write("Patterns/Kept.md", fm(type="pattern", status="accepted", tags="[type/pattern, status/accepted, topic/mind]"))
-        self.write("Tags.md", TAGS.replace("idea, project", "idea, pattern, project"))
-        self.assertEqual([f.path for f in self.hits("orphan")], ["Patterns/Kept.md"])
+    def test_a_draft_waits_unlinked_whatever_its_type_but_an_accepted_one_is_an_orphan(self):
+        self.write("Tags.md", TAGS.replace("idea, project", "idea, pattern, capture, project"))
+        for kind in ("pattern", "capture", "idea"):
+            self.write(f"{kind}/Draft-{kind}.md", fm(type=kind, status="draft", tags=f"[type/{kind}, status/draft, topic/mind]"))
+            self.write(f"{kind}/Kept-{kind}.md", fm(type=kind, status="accepted", tags=f"[type/{kind}, status/accepted, topic/mind]"))
+        self.assertEqual(sorted(f.path for f in self.hits("orphan")),
+                         ["capture/Kept-capture.md", "idea/Kept-idea.md", "pattern/Kept-pattern.md"])
+
+    def test_only_a_draft_waits_so_a_proposed_or_active_note_is_an_orphan(self):
+        for status in ("proposed", "active"):
+            self.write(f"{status}.md", fm(status=status, tags=f"[type/idea, status/{status}, topic/mind]"))
+        self.assertEqual(sorted(f.path for f in self.hits("orphan")), ["active.md", "proposed.md"])
 
     def test_garden_is_exempt_even_when_nothing_links_to_it(self):
         self.write("Tags.md", TAGS.replace("[[Garden]]", "home"))
@@ -493,7 +511,7 @@ class Nudges(VaultCase):
         self.assertEqual(self.hits("orphan", "Garden.md"), [])
 
     def test_a_folder_that_only_starts_like_inbox_is_not_exempt(self):
-        self.write("Inboxes/I.md", fm())
+        self.write("Inboxes/I.md", kept())
         self.assertEqual(len(self.hits("orphan", "Inboxes/I.md")), 1)
         self.write("Inboxes/J.md", fm().replace("Back to [[Garden]].", "x"), age_days=1)
         self.assertEqual(len(self.hits("no-links", "Inboxes/J.md")), 1)
@@ -505,9 +523,9 @@ class Nudges(VaultCase):
         self.assertTrue(self.hits("no-links", "A.md")[0].detail.endswith("could link: Aardvark, Zed"))
 
     def test_a_link_from_another_note_ends_the_orphan_state_but_a_self_link_does_not(self):
-        self.write("A.md", fm() + "[[A]]\n")
+        self.write("A.md", kept() + "[[A]]\n")
         self.assertEqual(len(self.hits("orphan", "A.md")), 1)
-        self.write("B.md", fm() + "[[A]]\n")
+        self.write("B.md", kept() + "[[A]]\n")
         self.assertEqual(self.hits("orphan", "A.md"), [])
 
     def test_no_tags(self):
@@ -724,7 +742,7 @@ class Command(VaultCase):
         self.assertEqual((code, out), (0, "0 error(s), 0 warning(s)\n"))
 
     def test_errors_exit_one_and_are_printed_with_counts(self):
-        self.write("A.md", fm(type=None))
+        self.write("A.md", kept(type=None))
         code, out = self.run_cli(self.root)
         self.assertEqual(code, 1)
         self.assertIn("A.md: error: missing-field: type\n", out)
@@ -732,7 +750,7 @@ class Command(VaultCase):
         self.assertTrue(out.endswith("1 error(s), 1 warning(s)\n"), out)
 
     def test_warnings_alone_exit_zero(self):
-        self.write("A.md", fm())
+        self.write("A.md", kept())
         code, out = self.run_cli(self.root)
         self.assertEqual(code, 0)
         self.assertIn("A.md: warning: orphan: no note links here", out)
@@ -754,7 +772,7 @@ class Command(VaultCase):
 
     def test_findings_come_back_sorted_even_when_found_late(self):
         self.write("Z.md", fm(type=None))
-        self.write("A.md", fm())
+        self.write("A.md", kept())
         found = self.lint()
         self.assertEqual(found, sorted(found))
         self.assertLess([f.path for f in found].index("A.md"), [f.path for f in found].index("Z.md"))

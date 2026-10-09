@@ -31,7 +31,7 @@ ADR 004 says "a lint enforces all of the above" and SPEC §4 lists five checks i
    - `unknown-type`, `unknown-status`: the value is not in the lists in `Tags.md`.
    - `broken-link`: a body or frontmatter link whose target is no note in the vault. A `#Heading` part is not checked.
    - `no-links` (warning): a note with no outgoing link. The report lists the names of notes the text mentions without linking ("could link: Foo, Bar"), found by plain string match, so the fix is one edit. `Inbox/` is exempt for `--inbox-days` days (default 14, the owner's choice; counted from the file's modification time), then it is reported.
-   - `orphan` (warning): a note nothing links to, outside `Inbox/`. Orphans are tolerated, so this never fails the run; the root note `Garden.md` and a pattern still marked `status: draft` are not reported (amendment of 2026-10-09).
+   - `orphan` (warning): a note nothing links to, outside `Inbox/`. Orphans are tolerated, so this never fails the run; the root note `Garden.md` and any note still marked `status: draft` are not reported (amendments of 2026-10-09).
    - `no-tags` (warning): a note with no tags, and, for `decision`, `concept`, `pattern`, `idea` and `source` notes, no `topic/` tag.
    - `unlisted-topic` (warning): a `topic/` tag that is neither listed in `Tags.md` (written `topic/name` in backticks) nor the name of a note. `topic/` tags are free-form: any may be used, and the warning is the nudge to list it in `Tags.md` and, better, to give it a note of its own to refer to. It matters most for a coined word or a name (Sympose, Stylo), which a reader cannot guess. The report names the tag and the notes using it.
    - `bad-tag`: a tag whose namespace is not listed, a `type/` or `status/` tag whose value is not listed, a `type/` or `status/` tag that disagrees with the field, a `project/` tag with no folder under `Projects/`, or any tag not lowercase kebab-case.
@@ -102,3 +102,9 @@ The first run reports the missing concept notes and whatever the owner's hand-wr
 - **Why a warning:** cited lines drift as the code changes, so an old accepted pattern would fail every close for no fault of the owner's.
 - **Path safety:** the cited path is resolved through symlinks and must stay inside the repo before the file is opened, so a `..`, an absolute path or a symlink in a draft cannot make the lint read elsewhere.
 - **Not changed:** every other check. A draft pattern is still not an orphan (the amendment above).
+
+## Amendment (2026-10-09): any draft is not an orphan, and a capture needs `projects` (ADR 017)
+
+- **Why:** ADR 017 has the assistant write notes as `status: draft` (captures, new concept or folder notes) that wait for the owner to read and link them, as draft patterns do.
+- **Rule:** an unlinked note with `status: draft` is not reported as an orphan, whatever its `type`. A draft idea, which the first amendment did not cover, is now exempt too. The type `capture` requires `projects`. `Tags.md` in the vault must list `capture` under `type/`, or the lint reports an unknown type.
+- **Not changed:** every other check, including the orphan check for `proposed`, `accepted` and `active` notes.
