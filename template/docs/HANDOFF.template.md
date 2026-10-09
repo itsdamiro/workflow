@@ -1,6 +1,8 @@
 # Handoff
 
 > Copy to `docs/HANDOFF.md`. Rewrite it at the close of every slice, under 60 lines. It holds only what is **volatile**: where the work stands, what is next, what waits on the owner. Durable things do not live here: a decision is an ADR, a recipe or a trap is in `docs/reference/`, a number (test count, commit hash) is whatever `git log -1` and `scripts/gates` say today. Prose that copies those goes stale. Name things one way throughout (one term per concept).
+>
+> Vault for `/handoff`: [the path to the owner's vault, e.g. `~/Development/garden`; this file is local-only, so a path is fine here. `/handoff` reads it from this line and asks if it is missing].
 
 ## Now
 
