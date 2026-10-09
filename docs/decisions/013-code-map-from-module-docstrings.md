@@ -1,15 +1,17 @@
 ---
 type: decision
-status: accepted
+status: superseded
 date: 2026-10-08
 projects: [workflow]
 concepts: [Vault conventions, Source of truth]
 amends: [009]
 supersedes: []
-tags: [type/decision, status/accepted, project/workflow, topic/vault, topic/architecture]
+tags: [type/decision, status/superseded, project/workflow, topic/vault, topic/architecture]
 ---
 
 # 013 — The code map is the committed Python module docstrings, copied unchanged
+
+> **Superseded by [016](016-the-workflow-reads-documents-not-code.md) on 2026-10-09:** the code map was removed; this record stays as written.
 
 > **Summary.** The sync writes one generated note per project, `<name> - Code map.md`, listing each committed Python file with the first paragraph of its module docstring, read with `ast` and never executed. The text is the author's own, so no claim of ours lands in a generated note. It costs one extractor and one note per project, and a file without a docstring is listed as a gap.
 

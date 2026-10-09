@@ -16,6 +16,7 @@ Lightweight records for anything durable. Format: `TEMPLATE.md`. Standard: `docs
 | [010](010-vault-lint-rules.md) | `vault_lint.py`: what it checks, and what it never does | Accepted |
 | [011](011-concept-names-and-aliases.md) | Concept names: readable, with aliases that survive a rename | Accepted |
 | [012](012-decision-records-and-vault-conventions-travel-with-the-template.md) | Decision records and vault conventions travel with the template | Accepted |
-| [013](013-code-map-from-module-docstrings.md) | The code map is the committed Python module docstrings, copied unchanged | Accepted |
+| [013](013-code-map-from-module-docstrings.md) | The code map is the committed Python module docstrings, copied unchanged | Superseded by 016 |
 | [014](014-stats-line-append-only-note.md) | The stats line is a row added to an append-only note, never rewritten | Accepted |
 | [015](015-context-size-from-the-session-transcript.md) | The Claude adapter reads the context size from the session's own transcript, and gives a dash when it cannot | Accepted |
+| [016](016-the-workflow-reads-documents-not-code.md) | The workflow reads documents, not code | Accepted |

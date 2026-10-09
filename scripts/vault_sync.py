@@ -6,26 +6,22 @@ Usage: python3 scripts/vault_sync.py <project-path> <vault-path> [--name NAME] [
 Reads docs/decisions/NNN-slug.md as committed on REF (default: the local branch the remote's HEAD names, else main or
 master), through git, so a draft is never published. Writes under <vault>/Projects/NAME/: a card per record in
 decisions/, "NAME - Rejected ideas.md", "NAME - Gotchas.md" (a copy of docs/reference/GOTCHAS.md when that file is
-committed), "NAME - Code map.md" (the first paragraph of each committed non-test Python file's module docstring, read with
-ast and never run; ADR 013), and the hub NAME.md only if it is missing. Every sentence in a generated note is
-text taken from a record, from GOTCHAS or from a docstring. Only notes marked `generated: true` are replaced; nothing is deleted (a record that vanishes
+committed), and the hub NAME.md only if it is missing. Every sentence in a generated note is
+text taken from a record or from GOTCHAS. Only notes marked `generated: true` are replaced; nothing is deleted (a record that vanishes
 becomes a tombstone card, a renamed one leaves a redirect). Exit 0 clean, 1 if anything was refused, 2 usage error.
 """
 
 from __future__ import annotations
 
 import argparse
-import ast
 import contextlib
 import datetime
-import itertools
 import json
 import os
 import re
 import subprocess
 import sys
 import tempfile
-import warnings
 
 RECORD = re.compile(r"^(\d{3})-(.+)\.md$")
 INDEX_ROW = re.compile(r"^\|\s*\[(\d{3})\]\([^)]*\)\s*\|.*\|\s*([^|]+?)\s*\|\s*$")
@@ -34,7 +30,6 @@ UNSAFE = re.compile(r'[\\/:*?"<>|#^\[\]]')
 STATUSES = {"proposed", "accepted", "superseded", "removed"}
 SUMMARY_MAX, BULLET_MAX, NAME_MAX = 600, 300, 80
 GOTCHAS_PATH = "docs/reference/GOTCHAS.md"
-DOCSTRING_MAX = 600
 
 
 class SyncError(Exception):
@@ -288,27 +283,16 @@ def render_gotchas(project: str, text: str, day: str, sha: str) -> str:
             f"Project: [[{project}]]. Generated from `{GOTCHAS_PATH}` at `{sha}`. The next sync overwrites this note; edit the file instead.\n")
 
 
-def render_code_map(project: str, entries: list[tuple[str, str, str]], day: str, sha: str) -> str:
-    """`entries` are (path, kind, text) in path order; kind is "doc" (text is the paragraph), "none" or "unreadable" (text is the error class)."""
-    fields = [("type", "reference"), ("status", "active")] + ([("created", day)] if day else []) + [
-        ("projects", flow([project])), ("source", yq("module docstrings")), ("generated", "true"), ("tags", tags("reference", "active", project))]
-    out = (frontmatter(fields) + f"\n# {project} — Code map\n\nWhat each committed Python file says about itself: the first paragraph of its module "
-           f"docstring, copied as written. Tests are left out. Back to [[{project}]].\n")
-    for directory, group in itertools.groupby([e for e in entries if e[1] == "doc"], key=lambda e: os.path.dirname(e[0])):
-        out += "\n## " + (span(directory + "/") if directory else "Top level") + "\n"
-        out += "".join(f"\n{span(path)}\n\n{fenced(text)}" for path, _, text in group)
-    for kind, heading, line in (("none", "No module docstring", "- {path}\n"), ("unreadable", "Unreadable", "- {path}: {text}\n")):
-        rows = [line.format(path=span(path), text=text) for path, k, text in entries if k == kind]
-        if rows:
-            out += f"\n## {heading}\n\n" + "".join(rows)
-    return out + (f"\n---\nProject: [[{project}]]. {len(entries)} Python files, tests left out, as committed up to `{sha}`. "
-                  "The next sync overwrites this note; edit the docstrings instead.\n")
+def span(text: str) -> str:
+    """Inline code that survives a backtick in the text."""
+    mark = "`" * (max((len(r) for r in re.findall(r"`+", text)), default=0) + 1)
+    pad = " " if text.startswith("`") or text.endswith("`") else ""
+    return f"{mark}{pad}{text}{pad}{mark}"
 
 
-def render_hub(project: str, today: str, gotchas: bool = False, code_map: bool = False) -> str:
+def render_hub(project: str, today: str, gotchas: bool = False) -> str:
     fields = [("type", "project"), ("status", "active"), ("created", today), ("tags", tags("project", "active", project))]
-    links = [f"[[{project} - Rejected ideas]]"] + [f"[[{project} - {n}]]" for on, n in ((gotchas, "Gotchas"), (code_map, "Code map")) if on]
-    see = links[0] if len(links) == 1 else ", ".join(links[:-1]) + " and " + links[-1]
+    see = f"[[{project} - Rejected ideas]]" + (f" and [[{project} - Gotchas]]" if gotchas else "")
     return frontmatter(fields) + f"\n# {project}\n\nHub for the project. Part of [[Projects]]. See {see}.\n"
 
 
@@ -416,96 +400,6 @@ def mirror_gotchas(project: str, ref: str, name: str, base: str, taken: dict[str
     return write_note(note, render_gotchas(name, text, min(days), sha), vault_real, dry, report)
 
 
-# ---- the code map ----------------------------------------------------------------------------------------------------
-
-
-def longest_run(text: str) -> int:
-    return max((len(r) for r in re.findall(r"`+", text)), default=0)
-
-
-def span(text: str) -> str:
-    """Inline code that survives a backtick in the text."""
-    mark = "`" * (longest_run(text) + 1)
-    pad = " " if text.startswith("`") or text.endswith("`") else ""
-    return f"{mark}{pad}{text}{pad}{mark}"
-
-
-def fenced(text: str) -> str:
-    """A code fence longer than any backtick run in the text, so nothing inside it is a link, a tag or a heading to the lint."""
-    mark = "`" * max(3, longest_run(text) + 1)
-    return f"{mark}\n{text}\n{mark}\n"
-
-
-def is_test_path(path: str) -> bool:
-    *folders, name = path.split("/")
-    return bool({"test", "tests"} & set(folders)) or name.startswith("test_") or name.endswith("_test.py")
-
-
-def python_files(project: str, ref: str) -> list[str]:
-    """Regular committed `.py` files outside test folders, grouped by folder in path order."""
-    found = []
-    for entry in git(project, "ls-tree", "-r", "-z", ref).split("\0"):
-        meta, _, path = entry.partition("\t")
-        if meta.split()[:2] in (["100644", "blob"], ["100755", "blob"]) and path.endswith(".py") and not is_test_path(path):
-            found.append(path)
-    return sorted(found, key=lambda p: (os.path.dirname(p), os.path.basename(p)))
-
-
-def read_docstring(source: str) -> tuple[str, str]:
-    """("doc", first paragraph), ("none", "") or ("unreadable", error class). The source is parsed, never imported or run."""
-    try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")  # the project's own invalid escapes are not ours to report
-            doc = ast.get_docstring(ast.parse(source.removeprefix("\ufeff"))) or ""  # Python reads a BOM as part of the encoding, but ast.parse of text does not
-    except (SyntaxError, ValueError, RecursionError) as e:
-        return "unreadable", type(e).__name__
-    paragraph = re.split(r"\n\s*\n", doc.strip(), maxsplit=1)[0].strip()
-    if len(paragraph) > DOCSTRING_MAX:
-        paragraph = paragraph[:DOCSTRING_MAX].rsplit(None, 1)[0] + "…"
-    return ("doc", paragraph) if paragraph else ("none", "")
-
-
-def code_history(project: str, ref: str, listed: list[str]) -> tuple[str, str]:
-    """(newest commit that touched a listed file, day the earliest listed file was first added). Reads one log, newest first, and follows a move back to its old name."""
-    tracked, sha, day, here, when = set(listed), "", "", "", ""
-    log = git(project, "-c", "core.quotepath=off", "log", "--topo-order", "-M", "--name-status", "--format=%x01%H %as", ref, "--", "*.py")
-    for line in log.splitlines():
-        if line.startswith("\x01"):
-            here, when = line[1:].split()
-            continue
-        parts = line.split("\t")
-        if len(parts) < 2 or parts[-1] not in tracked:
-            continue
-        sha = sha or here
-        if parts[0][0] == "A":
-            day = min(day or when, when)
-        elif parts[0][0] == "R":
-            tracked.add(parts[1])
-    return (sha or git(project, "rev-parse", ref).strip())[:8], day
-
-
-def mirror_code_map(project: str, ref: str, name: str, base: str, taken: dict[str, str], vault: str, vault_real: str, dry: bool,
-                    report: Report) -> bool:
-    """A project with no listed Python file gets no note, and no complaint. True when the note is, or would be, in place."""
-    files = python_files(project, ref)
-    if not files:
-        return False
-    label = f"{name} - Code map"
-    note = os.path.join(base, f"{label}.md")
-    used = taken_by(taken, label, note, vault)
-    if used:
-        report.refused.append((label, f"the name is already used by {used}"))
-        return False
-    entries = []
-    for path in files:
-        try:
-            entries.append((path, *read_docstring(git(project, "show", f"{ref}:{path}"))))
-        except SyncError as e:  # a blob git cannot give us is one gap, not the end of the sync
-            entries.append((path, "unreadable", type(e).__name__))
-    sha, day = code_history(project, ref, files)
-    return write_note(note, render_code_map(name, entries, day, sha), vault_real, dry, report)
-
-
 def check_inputs(project: str, vault: str, name: str) -> None:
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._ -]*", name):
         raise SyncError(f"project name {name!r} must be letters, digits, space, dot, dash or underscore")
@@ -558,14 +452,12 @@ def sync(project: str, vault: str, name: str, ref: str | None = None, dry: bool 
     else:
         write_note(rejected, render_rejected(name, list(records.values()), names), vault_real, dry, report)
     mirrored = mirror_gotchas(project, ref, name, base, taken, vault, vault_real, dry, report)
-    mapped = mirror_code_map(project, ref, name, base, taken, vault, vault_real, dry, report)
     hub = os.path.join(base, f"{name}.md")
     if not os.path.exists(hub) and name.lower() not in taken:  # a hub the owner keeps elsewhere is the hub
-        write_note(hub, render_hub(name, today, mirrored, mapped), vault_real, dry, report)
+        write_note(hub, render_hub(name, today, mirrored), vault_real, dry, report)
     elif os.path.exists(hub):  # the hub is the owner's: say so, never edit it
-        for note, label in ((mirrored, "Gotchas"), (mapped, "Code map")):
-            if note and f"[[{name} - {label}" not in read_text(hub):
-                report.hints.append(f"{os.path.relpath(hub, vault)} does not link to [[{name} - {label}]]: add the link if you want it")
+        if mirrored and f"[[{name} - Gotchas" not in read_text(hub):
+            report.hints.append(f"{os.path.relpath(hub, vault)} does not link to [[{name} - Gotchas]]: add the link if you want it")
 
     if os.path.isdir(decisions):
         for entry in sorted(os.listdir(decisions)):

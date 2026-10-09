@@ -4,14 +4,11 @@ import contextlib
 import io
 import json
 import os
-import re
 import stat
 import subprocess
 import sys
 import tempfile
 import unittest
-import warnings
-from unittest import mock
 
 sys.path.insert(0, os.path.dirname(__file__))
 import vault_sync as v  # noqa: E402
@@ -388,227 +385,18 @@ class Gotchas(Base):
         self.assertEqual(self.sync().hints, [])
 
 
-class CodeMap(Base):
-    def note_path(self, name="demo"):
-        return os.path.join(self.vault, "Projects", name, f"{name} - Code map.md")
-
-    def commit_py(self, files, date="2026-01-02T12:00:00+0000", message="python"):
-        for rel, text in files.items():
-            put(self.repo, rel, text)
-            git(self.repo, "add", rel)
-        env = {**os.environ, "GIT_AUTHOR_DATE": date, "GIT_COMMITTER_DATE": date}
-        subprocess.run(["git", "-C", self.repo, "commit", "-q", "-m", message], env=env, check=True)
-
-    def body(self):
-        return read(self.note_path())
-
-    def test_each_file_is_listed_with_the_first_paragraph_of_its_docstring_in_a_fence(self):
-        self.commit_py({"demo/a.py": '"""Does A.\n\nSecond paragraph, left out.\n"""\nx = 1\n'})
-        self.sync()
-        body = self.body()
-        self.assertIn("`demo/a.py`\n\n```\nDoes A.\n```\n", body)
-        self.assertNotIn("Second paragraph", body)
-        meta = v.parse_frontmatter(body)[0]
-        self.assertEqual((meta["type"], meta["status"], meta["generated"], meta["source"]), ("reference", "active", "true", "module docstrings"))
-        self.assertEqual(meta["tags"], ["type/reference", "status/active", "project/demo"])
-
-    def test_the_authors_line_breaks_are_kept(self):
-        self.commit_py({"a.py": '"""One line\nand the next.\n"""\n'})
-        self.sync()
-        self.assertIn("```\nOne line\nand the next.\n```", self.body())
-
-    def test_tests_other_languages_links_and_untracked_files_are_not_listed(self):
-        files = {name: '"""Doc."""\n' for name in ("a.py", "tests/b.py", "pkg/test/c.py", "test_d.py", "e_test.py", "pkg/testing.py")}
-        self.commit_py({**files, "f.js": "// not python\n"})
-        os.symlink("a.py", os.path.join(self.repo, "link.py"))
-        git(self.repo, "add", "link.py")
-        git(self.repo, "update-index", "--chmod=+x", "pkg/testing.py")  # an executable script is still a script
-        git(self.repo, "commit", "-q", "-m", "link")
-        put(self.repo, "untracked.py", '"""Not committed."""\n')
-        self.sync()
-        listed = re.findall(r"^`([^`]+\.py)`$", self.body(), re.M)
-        self.assertEqual(listed, ["a.py", "pkg/testing.py"])
-        self.assertNotIn("f.js", self.body())
-        self.assertNotIn("link.py", self.body())
-
-    def test_the_source_is_parsed_never_run(self):
-        marker = os.path.join(self.tmp.name, "ran")
-        self.commit_py({"a.py": f'"""Safe."""\nopen({marker!r}, "w").close()\nraise SystemExit\n'})
-        self.sync()
-        self.assertFalse(os.path.exists(marker))
-        self.assertIn("Safe.", self.body())
-
-    def test_a_string_that_is_not_the_first_statement_is_not_a_docstring(self):
-        self.commit_py({"a.py": 'import os\n"""Not a module docstring."""\n'})
-        self.sync()
-        self.assertNotIn("Not a module", self.body())
-        self.assertIn("## No module docstring\n\n- `a.py`\n", self.body())
-
-    def test_a_long_paragraph_is_cut_at_a_word_with_an_ellipsis(self):
-        self.commit_py({"a.py": '"""' + "word " * 200 + '"""\n'})
-        self.sync()
-        text = re.search(r"```\n(.*?)\n```", self.body(), re.S).group(1)
-        self.assertTrue(text.endswith("word…"))
-        self.assertLessEqual(len(text), v.DOCSTRING_MAX + 1)
-
-    def test_a_paragraph_of_exactly_the_limit_is_not_cut(self):
-        text = ("x" * 99 + " ") * 5 + "y" * (v.DOCSTRING_MAX - 500)
-        self.assertEqual(len(text), v.DOCSTRING_MAX)
-        self.assertEqual(v.read_docstring(f'"""{text}"""'), ("doc", text))
-
-    def test_a_link_a_tag_and_a_fence_inside_a_docstring_stay_inside_the_fence(self):
-        self.commit_py({"a.py": '"""Uses [[Some Note]] and #tag.\n```\nnot a close\n```\n"""\n'})
-        self.sync()
-        body = self.body()
-        self.assertIn("````\nUses [[Some Note]] and #tag.\n```\nnot a close\n```\n````\n", body)
-        self.assertNotIn("Some Note", prose_of(body))
-
-    def test_files_without_a_docstring_or_that_cannot_be_read_are_listed_and_the_sync_goes_on(self):
-        self.commit_py({"a.py": '"""Fine."""\n', "b.py": "x = 1\n", "c.py": '""" """\n', "d.py": "def broken(:\n", "e.py": "x = '\0'\n"})
+class LeftoverCodeMap(Base):
+    def test_a_code_map_note_from_an_earlier_version_is_left_alone(self):
+        """ADR 016: the code map is gone, but the sync deletes nothing, so a generated note it once wrote stays as it is."""
+        note = os.path.join(self.vault, "Projects", "demo", "demo - Code map.md")
+        os.makedirs(os.path.dirname(note), exist_ok=True)
+        old = "---\ntype: reference\nstatus: active\ngenerated: true\n---\n\n# demo — Code map\n"
+        with open(note, "w", encoding="utf-8") as f:
+            f.write(old)
         report = self.sync()
+        self.assertEqual(read(note), old)
         self.assertEqual(report.refused, [])
-        body = self.body()
-        self.assertIn("## No module docstring\n\n- `b.py`\n- `c.py`\n", body)
-        self.assertIn("## Unreadable\n\n- `d.py`: SyntaxError\n", body)
-        self.assertIn("`e.py`: ", body)
-        self.assertEqual([body.count(f"`{name}.py`") for name in "bcd"], [1, 1, 1])  # a gap is listed once, not also as an empty entry
-        self.assertEqual(len(os.listdir(self.cards)), 3)
-
-    def test_whatever_error_the_parser_raises_the_file_is_unreadable_not_a_crash(self):
-        for error in (ValueError, RecursionError):
-            with mock.patch.object(v.ast, "parse", side_effect=error("x")):
-                self.assertEqual(v.read_docstring("x = 1\n"), ("unreadable", error.__name__))
-
-    def test_a_byte_order_mark_does_not_make_a_file_unreadable(self):
-        self.assertEqual(v.read_docstring('\ufeff"""Doc."""\n'), ("doc", "Doc."))
-        self.commit_py({"a.py": '\ufeff"""Doc."""\n'})
-        self.sync()
-        self.assertIn("Doc.", self.body())
-        self.assertNotIn("Unreadable", self.body())
-
-    def test_a_blob_git_cannot_give_is_one_gap_and_the_sync_goes_on(self):
-        self.commit_py({"a.py": '"""Fine."""\n', "b.py": '"""Also."""\n'})
-        real = v.git
-
-        def flaky(project, *args, **kw):
-            if args[0] == "show" and args[1].endswith(":b.py"):
-                raise v.SyncError("git show: missing blob")
-            return real(project, *args, **kw)
-
-        with mock.patch.object(v, "git", flaky):
-            report = self.sync()
-        self.assertEqual(report.refused, [])
-        self.assertIn("## Unreadable\n\n- `b.py`: SyncError\n", self.body())
-        self.assertIn("Fine.", self.body())
-
-    def test_an_invalid_escape_in_the_source_prints_no_warning(self):
-        with warnings.catch_warnings(record=True) as seen:
-            warnings.simplefilter("always")
-            self.assertEqual(v.read_docstring('"""Doc."""\nx = "\\d"\n'), ("doc", "Doc."))
-        self.assertEqual(seen, [])
-
-    def test_files_are_grouped_under_a_heading_per_folder_in_path_order(self):
-        self.commit_py({"z.py": '"""Z."""\n', "b/y.py": '"""Y."""\n', "a/x.py": '"""X."""\n', "a/w.py": '"""W."""\n'})
-        self.sync()
-        headings = re.findall(r"^## (.*)$", self.body(), re.M)
-        self.assertEqual(headings, ["Top level", "`a/`", "`b/`"])
-        self.assertLess(self.body().index("`a/w.py`"), self.body().index("`a/x.py`"))
-        self.assertLess(self.body().index("`z.py`"), self.body().index("`a/w.py`"))
-
-    def test_created_is_the_day_the_earliest_listed_file_was_first_added_and_survives_a_move(self):
-        git(self.repo, "config", "diff.renames", "false")  # the sync must not depend on this setting
-        self.commit_py({"old.py": '"""Old."""\n'}, date="2026-01-02T12:00:00+0000")
-        self.commit_py({"new.py": '"""New."""\n'}, date="2026-03-04T12:00:00+0000")
-        os.makedirs(os.path.join(self.repo, "pkg"))
-        git(self.repo, "mv", "old.py", "pkg/old.py")
-        env = {**os.environ, "GIT_AUTHOR_DATE": "2026-05-06T12:00:00+0000", "GIT_COMMITTER_DATE": "2026-05-06T12:00:00+0000"}
-        subprocess.run(["git", "-C", self.repo, "commit", "-q", "-m", "move"], env=env, check=True)
-        self.sync(today="1999-01-01")
-        self.assertEqual(v.parse_frontmatter(self.body())[0]["created"], "2026-01-02")
-
-    def test_a_test_file_added_earlier_does_not_set_created(self):
-        self.commit_py({"tests/t.py": '"""T."""\n'}, date="2026-01-02T12:00:00+0000")
-        self.commit_py({"a.py": '"""A."""\n'}, date="2026-03-04T12:00:00+0000")
-        self.sync()
-        self.assertEqual(v.parse_frontmatter(self.body())[0]["created"], "2026-03-04")
-
-    def test_a_change_to_a_test_or_a_non_python_file_leaves_the_note_unchanged(self):
-        self.commit_py({"a.py": '"""A."""\n'})
-        self.sync()
-        self.commit_py({"tests/t.py": "x = 1\n", "notes.txt": "hi\n"}, message="other")
-        self.assertEqual(self.sync().updated, [])
-        self.commit_py({"a.py": '"""A."""\nx = 1\n'}, message="code")
-        self.assertEqual(self.sync().updated, ["Projects/demo/demo - Code map.md"])
-
-    def test_the_footer_names_the_hub_the_commit_and_the_count(self):
-        self.commit_py({"a.py": '"""A."""\n', "b.py": "x = 1\n"})
-        self.sync()
-        sha = git(self.repo, "rev-parse", "HEAD").strip()[:8]
-        self.assertTrue(self.body().rstrip().splitlines()[-1].startswith(f"Project: [[demo]]. 2 Python files, tests left out, as committed up to `{sha}`."))
-
-    def test_a_project_with_no_listed_python_gets_no_note_and_no_complaint(self):
-        report = self.sync()
-        self.assertFalse(os.path.exists(self.note_path()))
-        self.commit_py({"tests/t.py": '"""T."""\n'})
-        self.assertEqual(self.sync().refused, [])
-        self.assertFalse(os.path.exists(self.note_path()))
-
-    def test_a_second_sync_changes_nothing_and_a_dry_run_writes_nothing(self):
-        self.commit_py({"a.py": '"""A."""\n'})
-        report = self.sync(dry=True)
-        self.assertIn("Projects/demo/demo - Code map.md", report.created)
-        self.assertFalse(os.path.exists(self.note_path()))
-        self.sync()
-        before = self.body()
-        report = self.sync()
-        self.assertEqual((self.body(), report.created, report.updated), (before, [], []))
-        self.assertIn("Projects/demo/demo - Code map.md", report.unchanged)
-
-    def test_a_hand_written_note_at_that_name_is_left_alone(self):
-        self.commit_py({"a.py": '"""A."""\n'})
-        put(self.vault, "Projects/demo/demo - Code map.md", "---\ntype: reference\n---\nMine.\n")
-        report = self.sync()
-        self.assertEqual(self.body(), "---\ntype: reference\n---\nMine.\n")
-        self.assertEqual([label for label, _ in report.refused], ["Projects/demo/demo - Code map.md"])
-
-    def test_a_name_already_used_elsewhere_in_the_vault_is_refused(self):
-        self.commit_py({"a.py": '"""A."""\n'})
-        put(self.vault, "Elsewhere/demo - Code map.md", "---\ntype: reference\n---\nMine.\n")
-        report = self.sync()
-        self.assertFalse(os.path.exists(self.note_path()))
-        self.assertEqual([label for label, _ in report.refused], ["demo - Code map"])
-
-    def test_a_docstring_changed_in_the_code_updates_the_note(self):
-        self.commit_py({"a.py": '"""First."""\n'})
-        self.sync()
-        self.commit_py({"a.py": '"""Second."""\n'}, message="edit")
-        self.assertEqual(self.sync().updated, ["Projects/demo/demo - Code map.md"])
-        self.assertIn("Second.", self.body())
-
-    def test_a_new_hub_links_to_the_note_and_an_existing_one_is_only_hinted(self):
-        hub = os.path.join(self.vault, "Projects", "demo", "demo.md")
-        self.sync()
-        self.assertNotIn("Code map", read(hub))
-        os.remove(hub)
-        self.commit_py({"a.py": '"""A."""\n'})
-        self.sync()
-        self.assertIn("See [[demo - Rejected ideas]] and [[demo - Code map]].", read(hub))
-        os.remove(hub)
-        put(self.vault, "Projects/demo/demo.md", "---\ntype: project\n---\nMine.\n")
-        report = self.sync()
-        self.assertEqual(read(hub), "---\ntype: project\n---\nMine.\n")
-        self.assertEqual(len(report.hints), 1)
-        self.assertIn("[[demo - Code map]]", report.hints[0])
-
-    def test_a_hub_with_both_notes_links_to_both(self):
-        self.commit_py({"a.py": '"""A."""\n', "docs/reference/GOTCHAS.md": GOTCHAS})
-        self.sync()
-        self.assertIn("See [[demo - Rejected ideas]], [[demo - Gotchas]] and [[demo - Code map]].", read(os.path.join(self.vault, "Projects", "demo", "demo.md")))
-
-    def test_a_backtick_in_a_path_or_a_docstring_cannot_end_its_span_or_fence(self):
-        self.assertEqual(v.span("a`b.py"), "``a`b.py``")
-        self.assertEqual(v.span("`a"), "`` `a ``")
-        self.assertEqual(v.fenced("x ```` y"), "`````\nx ```` y\n`````\n")
+        self.assertEqual(report.tombstoned, [])
 
 
 class Idempotence(Base):

@@ -70,4 +70,4 @@ Sympose's records have no `concepts`, so its cards link to none until they are b
 
 ## Amendment (2026-10-08): the code map and the stats line
 
-- Item 9's two remaining deferrals are decided elsewhere: the code map in ADR 013 (written by the sync) and the stats line in ADR 014 (written by `scripts/stats_line.py`, not by the sync, because it adds a row instead of rebuilding a note). The sync never touches the stats note.
+- Item 9's two remaining deferrals are decided elsewhere: the code map in ADR 013 (written by the sync; removed by ADR 016) and the stats line in ADR 014 (written by `scripts/stats_line.py`, not by the sync, because it adds a row instead of rebuilding a note). The sync never touches the stats note.

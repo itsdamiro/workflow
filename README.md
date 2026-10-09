@@ -59,7 +59,7 @@ python3 scripts/vault_sync.py <project-path> <vault-path> --dry-run   # say what
 python3 scripts/vault_sync.py <project-path> <vault-path>            # write it
 ```
 
-Reads the project's committed `docs/decisions/` and writes read-only cards, a "Rejected ideas" note and a hub note under `<vault>/Projects/<name>/`. It also copies a committed `docs/reference/GOTCHAS.md` and writes a code map, the first paragraph of each committed non-test Python file's module docstring (read with `ast`, never run). Only notes marked `generated: true` are ever replaced; nothing is deleted. See ADR 009 and ADR 013.
+Reads the project's committed `docs/decisions/` and writes read-only cards, a "Rejected ideas" note and a hub note under `<vault>/Projects/<name>/`. It also copies a committed `docs/reference/GOTCHAS.md`. Only notes marked `generated: true` are ever replaced; nothing is deleted. See ADR 009 (and ADR 016: the workflow reads documents, not code).
 
 ### Add a stats row at the close
 

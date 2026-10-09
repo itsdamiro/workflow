@@ -43,7 +43,7 @@ An adapter may add convenience (a reminder, a button). It may not add behaviour 
 The central vault is `garden`, started empty on 2026-10-08. It is local with no remote; it is to be git-initialised for history (not yet done).
 
 ```
-Projects/<name>/   <name>.md (hub, yours), decisions/, <name> - Rejected ideas.md, <name> - Gotchas.md (when committed), <name> - Code map.md (when the project has Python), <name> - Stats.md (one row per `/handoff`)
+Projects/<name>/   <name>.md (hub, yours), decisions/, <name> - Rejected ideas.md, <name> - Gotchas.md (when committed), <name> - Stats.md (one row per `/handoff`)
 Concepts/          one note per idea you name (the vocabulary)
 Patterns/          reusable building blocks, each citing code and any ADR
 Ideas/             your own notes
@@ -93,9 +93,8 @@ A script, no model, idempotent. It reads the committed state of each project's d
 | every "Alternatives rejected" | `<name> - Rejected ideas.md` | parsed |
 | `docs/reference/GOTCHAS.md`, if committed | `<name> - Gotchas.md` | copied as committed; a local-only file is skipped (ADR 009 amendment) |
 | `git log` and the adapter's context size (ADR 015), one row per `/handoff` | `<name> - Stats.md` | `scripts/stats_line.py`, not the sync: a row is added to an append-only note and no earlier row is rewritten (ADR 014) |
-| module docstrings | `<name> - Code map.md` | the first paragraph of each committed, non-test Python file's docstring, read with `ast` and never run (ADR 013); other languages add an extractor when a project needs one |
 
-The first version (ADR 009) does the cards and the Rejected-ideas note only; the `GOTCHAS` mirror followed (ADR 009 amendment): it copies the file as committed, and a project where the file is local-only gets none. The code map followed (ADR 013): one note listing each committed, non-test Python file with the first paragraph of its docstring in a code fence, so nothing in a docstring becomes a link or a tag; a file with no docstring, or one that cannot be parsed, is listed as a gap. Concept notes are the owner's: the cards that name a concept appear in its backlinks.
+The first version (ADR 009) does the cards and the Rejected-ideas note only; the `GOTCHAS` mirror followed (ADR 009 amendment): it copies the file as committed, and a project where the file is local-only gets none. A code map followed (ADR 013) and was removed (ADR 016): the workflow reads a project's documents, never its source. Concept notes are the owner's: the cards that name a concept appear in its backlinks.
 
 The script only overwrites notes marked `generated: true`. It never touches a note without the marker.
 
