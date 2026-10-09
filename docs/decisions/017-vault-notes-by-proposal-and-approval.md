@@ -85,3 +85,9 @@ Left open: the hook above; a capture that belongs to no project (`--project` is 
 - **Keeping proposals until the close.** The list needs a home that survives an interrupted session; writing on the yes keeps the state in the vault.
 
 **Accepted** by the owner on 2026-10-09, in chat, as written.
+
+## Amendment (2026-10-09): approval may be a button, and the reader takes mid-turn messages
+
+- **Why:** the owner asked for buttons instead of typing, and one typed "yes" had to cover two proposals. A choice prompt returns a structured answer per proposal.
+- **Decided by the owner:** where the assistant has a choice prompt (Claude Code: `AskUserQuestion`), each proposal is one question with its exact text and place in the preview and the options Write it and Skip; text typed in "Other" means change it first. Where it has none (Gemini CLI), approval stays plain words. Decision 1 is otherwise unchanged: nothing is written without a clear yes, and the script still cannot see the answer.
+- **The reader (decision 4):** a message the owner sends while the assistant is working is stored as an `attachment` record of type `queued_command`, not as a `user` record. The reader includes it when its origin is human. Found on 2026-10-09, when a mid-turn message was missing from the reader's output; it failed safe, because a quote from it was refused.

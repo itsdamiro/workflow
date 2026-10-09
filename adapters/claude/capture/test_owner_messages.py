@@ -35,6 +35,18 @@ class Typed(unittest.TestCase):
                       user("odd", origin="human"), {"type": "attachment", "message": {"content": "x"}}, user(""), user(5), user(None)):
             self.assertEqual(om.typed_text(event), "", event)
 
+    def test_a_message_sent_while_the_assistant_worked_is_kept_as_a_queued_command(self):
+        def queued(**extra):
+            a = {"type": "queued_command", "prompt": "sent mid-turn", "origin": HUMAN, "commandMode": "prompt", **extra}
+            return {"type": "attachment", "attachment": a}
+        self.assertEqual(om.typed_text(queued()), "sent mid-turn")
+        self.assertEqual(om.typed_text(queued(prompt="a\fb")), "a b")
+        self.assertEqual(om.typed_text({**queued(), "isSidechain": True}), "")
+        for bad in (queued(origin={"kind": "peer"}), queued(origin=None), queued(origin="human"), queued(type="other"), queued(prompt=None),
+                    {"type": "attachment", "attachment": "queued_command"}, {"type": "attachment"},
+                    {"type": "attachment", "attachment": {"type": "hook_success", "prompt": "x", "origin": HUMAN}}):
+            self.assertEqual(om.typed_text(bad), "", bad)
+
     def test_an_event_with_no_origin_is_kept_as_older_transcripts_have_none(self):
         self.assertEqual(om.typed_text({"type": "user", "message": {"content": "old style"}}), "old style")
 
@@ -71,6 +83,11 @@ class Command(unittest.TestCase):
         self.assertEqual(out, "one\n\f\ntwo\n\nstill two\n\f\nthree\n")
         self.assertNotIn("assistant words", out)
         self.assertNotIn("tool words", out)
+
+    def test_a_queued_message_comes_out_in_its_place(self):
+        queued = {"type": "attachment", "attachment": {"type": "queued_command", "prompt": "mid", "origin": HUMAN}}
+        self.transcript([user("one"), {"type": "queue-operation", "operation": "enqueue", "content": "mid"}, queued, user("two")])
+        self.assertEqual(self.run_cli(SID)[:2], (0, "one\n\f\nmid\n\f\ntwo\n"))
 
     def test_no_session_id_a_bad_one_or_an_unknown_one_gives_exit_one_and_no_output(self):
         self.transcript([user("one")])
