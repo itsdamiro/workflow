@@ -1,6 +1,7 @@
 ---
 name: handoff
-description: Closes a slice for the next session — runs the gates, commits the slice's work, syncs the vault and runs the lint, runs the vault sync, stats row and lint as one script, scans the diff for patterns, rewrites docs/HANDOFF.md, pushes and reports. `/handoff full` adds the two reviews of the diff (correctness and over-engineering) before the commit and a fresh-reader test of the handoff. Use when the user types /handoff, asks to hand off, or says the session is getting long and the slice is done.
+disable-model-invocation: true
+description: Closes a slice for the next session — runs the gates, commits the slice's work, runs the vault sync, stats row and lint as one script, scans the diff for patterns, rewrites docs/HANDOFF.md, pushes and reports. `/handoff full` adds the two reviews of the diff (correctness and over-engineering) before the commit and a fresh-reader test of the handoff. Run by the user typing /handoff.
 ---
 
 # Handoff
