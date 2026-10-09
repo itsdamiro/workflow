@@ -13,8 +13,7 @@ const DEFAULTS = {
   softTokens: 150000,
   hardTokens: 200000,
   limitPercent: 80,
-  handoffPrompt: '/handoff', // the one entry point: the handoff skill, which follows docs/sop/handoff.md
-  handoffCheckPrompt: '/handoff check', // the same, plus the two reviews and the slow fresh-reader test (ADR 005 amendments)
+  handoffPrompt: '/handoff', // the one entry point: the handoff skill, which follows docs/sop/handoff.md (reviews and fresh-reader check included, ADR 005)
 }
 
 const k = (n: number) => `${Math.round(n / 1000)}k`
@@ -102,16 +101,6 @@ export const register: Register = (on, options) => {
             onPress={async () => {
               await update($, dismissed, () => u.level)
               await $.prompt.submit({ text: opt.handoffPrompt, asUser: true })
-            }}
-          />
-        ) : null}
-        {showContext ? (
-          <Button
-            key="close-check"
-            label="Close + check"
-            onPress={async () => {
-              await update($, dismissed, () => u.level)
-              await $.prompt.submit({ text: opt.handoffCheckPrompt, asUser: true })
             }}
           />
         ) : null}

@@ -11,7 +11,7 @@ tags: [type/decision, status/accepted, project/workflow, topic/vault, topic/patt
 
 # 005 — One `/handoff` procedure closes a slice
 
-> **Summary.** A single procedure commits and pushes the slice, runs the vault sync, the lints, the pattern scan and the handoff draft, and reports what awaits the owner's acceptance. The option `check` adds the two reviews of `docs/CLOSING_A_SLICE.md` step 5 (correctness, and over-engineering) before the commit and a fresh-reader test of the handoff.
+> **Summary.** A single procedure commits and pushes the slice, runs the vault sync, the lints, the pattern scan and the handoff draft, and reports what awaits the owner's acceptance. The two reviews of `docs/CLOSING_A_SLICE.md` step 5 (correctness, and over-engineering) before the commit and a fresh-reader test of the handoff are part of every run.
 
 ## Context
 
@@ -59,3 +59,11 @@ One command from the owner's side. The work inside a long session costs tokens, 
 - **How they run:** together, before the commit, over the same diff. The correctness review is `/code-review` as before. The over-engineering lens is a reader who did not write the code, asked one question, whether every new thing earns its place (duplicated logic, work done twice, options nothing uses, abstractions with one caller, defensive code for a case that cannot happen, a new file where an edit would do), with `/simplify` or a read-only subagent as the tool. Neither review hides the other's findings, and the two lists are fixed in one round: each real finding is fixed (tests first, gates after) or declined with one line saying why. A simplification must not change behaviour a test pins.
 - **Cost:** `check` is now the expensive close, as it was meant to be: two reviews and, later, the fresh-reader rounds.
 
+## Amendment (2026-10-09): the reviews and the fresh-reader check are part of every close
+
+- **Decided by the owner:** the two reviews of the slice's diff (correctness and over-engineering) and the fresh-reader check of the handoff are part of the development process, so plain `/handoff` runs all three every time. This replaces "only when named" in the three amendments of 2026-10-08 (the fresh-reader check, `/code-review`, and the over-engineering lens). The order they set stands: the reviews before the commit, the fresh-reader check between the handoff draft and the stats line.
+- **`check` stays an accepted word** with no effect, so an older prompt, button or habit that types `/handoff check` still works and runs the same close.
+- **Enforcement, and its limit:** the reviews and the fresh-reader rounds are model work, so a script cannot prove they ran (`docs/CODE_QUALITY_STANDARDS.md` §12: the layer is wording plus a report line). The procedure and the skill say a check is never skipped or run without saying so; if one cannot run (no reviewer available, an interrupted session), the report names which and why, and the close is not called complete.
+- **The session guard** has one close button again. **Close + check** and its `handoffCheckPrompt` setting are removed (plugin version 0.2.0), since both buttons would run the same close.
+- **Cost, accepted:** a close takes minutes and a subagent per round; the first full run took about eight minutes for the fresh-reader check alone.
+- **Follows:** `docs/sop/handoff.md`, the `handoff` skill, the Gemini command, SPEC §7 and §8, and the session guard's README are amended to match.

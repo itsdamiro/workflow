@@ -44,8 +44,9 @@ class Defaults(unittest.TestCase):
             with self.assertRaisesRegex(AssertionError, "150 \\* 1000"):
                 fallbacks()
 
-    def test_the_close_buttons_submit_the_handoff_command(self):  # ADR 005: one entry point, so a change of command is a recorded decision
-        self.assertEqual((declared()["handoffPrompt"], declared()["handoffCheckPrompt"]), ("/handoff", "/handoff check"))
+    def test_the_close_button_submits_the_handoff_command(self):  # ADR 005: one entry point, so a change of command is a recorded decision
+        self.assertEqual(declared()["handoffPrompt"], "/handoff")
+        self.assertNotIn("handoffCheckPrompt", declared())  # ADR 005, amendment of 2026-10-09: the reviews and the check are part of every close
 
 
 if __name__ == "__main__":

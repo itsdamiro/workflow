@@ -11,7 +11,7 @@ For any assistant. A long session re-reads its whole conversation on every messa
 ## Before you leave the old session
 
 1. The slice's work is committed (only on the owner's go-ahead) or its state is written in `docs/HANDOFF.md`.
-2. `docs/HANDOFF.md` is rewritten. Run `docs/sop/check-a-handoff.md` on it (`/handoff check`) when its shape changed.
+2. `docs/HANDOFF.md` is rewritten. `/handoff` has already run `docs/sop/check-a-handoff.md` on it; run it again only if you edited the handoff afterwards.
 3. Anything learned that the next session needs is in `docs/reference/GOTCHAS.md` or a decision record, not only in the conversation.
 
 ## Starting

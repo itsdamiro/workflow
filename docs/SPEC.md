@@ -100,16 +100,16 @@ The script only overwrites notes marked `generated: true`. It never touches a no
 
 ## 7. `/handoff`
 
-One procedure, run when a slice's work is done (`docs/sop/handoff.md`); it commits the slice's named files and pushes (ADR 005 amendment). The slow parts, the two reviews and the fresh-reader check, run only when the owner types `/handoff check` (ADR 005 amendments).
+One procedure, run when a slice's work is done (`docs/sop/handoff.md`); it commits the slice's named files and pushes (ADR 005 amendment). The two reviews and the fresh-reader check are part of every run (ADR 005 amendments, the last of 2026-10-09); `/handoff check` is still accepted and means the same.
 
 | Step | When | Who |
 |---|---|---|
-| review the slice's diff for correctness (`/code-review`) and for over-engineering, together, before the commit | `check` | model reviews, owner decides |
+| review the slice's diff for correctness (`/code-review`) and for over-engineering, together, before the commit | always | model reviews, owner decides |
 | run the gates, then commit the slice's named files | always | script and model |
 | run `vault-sync` and the lints | always | script |
 | scan the slice's diff for a reusable pattern (cites file and lines; "none" is a valid result) | always | model drafts, owner accepts |
 | draft `docs/HANDOFF.md` | always | model drafts, owner accepts |
-| check the handoff with a fresh reader and the six questions | `check` | fresh session or another model |
+| check the handoff with a fresh reader and the six questions | always | fresh session or another model |
 | write the stats line (day, commit, commits since the last row, their first and last subject, context size at close, from the adapter: `adapters/claude/context-report/last_context.py` under Claude Code, ADR 015) | always | script |
 | push the branch, when the lint has no error | always | script and model |
 | report: synced, lint failures, what awaits acceptance | always | script and model |
@@ -118,7 +118,7 @@ Running `/handoff` is the owner's go-ahead to commit and push the slice; outside
 
 ## 8. Session guard
 
-Optional adapter (a Claude Code mod). It shows context size in the status line, shows a band with two close buttons (**Close slice** submits `/handoff`, **Close + check** submits `/handoff check`) at a soft threshold (default 150k tokens) and a stronger one at a hard threshold (default 200k). It never blocks. It may also show rate-limit windows and the closing checklist. Prototype in `adapters/claude/session-guard/`: validated, not yet checked drawing on the desktop app. The hard git rules stay in a hook, not in the mod.
+Optional adapter (a Claude Code mod). It shows context size in the status line, shows a band with one close button (**Close slice** submits `/handoff`, which includes the reviews and the fresh-reader check) at a soft threshold (default 150k tokens) and a stronger one at a hard threshold (default 200k). It never blocks. It may also show rate-limit windows and the closing checklist. Prototype in `adapters/claude/session-guard/`: validated, not yet checked drawing on the desktop app. The hard git rules stay in a hook, not in the mod.
 
 ## 9. Project types
 
