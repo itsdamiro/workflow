@@ -827,5 +827,109 @@ class TagsNote(unittest.TestCase):
                 vl.read_tags(text)
 
 
+class PatternCitations(VaultCase):
+    """ADR 006 asks every pattern to cite the code it comes from; ADR 010's amendment of 2026-10-09 checks it."""
+
+    def setUp(self):
+        super().setUp()
+        self.repo_tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.repo_tmp.cleanup)
+        self.repo = os.path.realpath(self.repo_tmp.name)
+        os.makedirs(os.path.join(self.repo, "src"))
+        with open(os.path.join(self.repo, "src", "a.py"), "w", encoding="utf-8") as f:
+            f.write("".join(f"line {n}\n" for n in range(1, 11)))  # ten lines
+
+    def pattern(self, code="src/a.py:2-5", name="Pat.md", **extra):
+        self.write(name, fm(type="pattern", tags="[type/pattern, status/draft, topic/mind]", code=code, **extra))
+
+    def found(self, rule, repos=None):
+        return [f for f in self.lint(repos=repos) if f.rule == rule]
+
+    def test_a_pattern_with_no_code_is_warned_with_or_without_a_repo(self):
+        self.pattern(code=None)
+        for repos in (None, {"alpha": self.repo}):
+            hits = self.found("pattern-no-code", repos)
+            self.assertEqual([(f.path, f.severity) for f in hits], [("Pat.md", "warning")])
+
+    def test_a_valid_citation_has_no_finding(self):
+        self.pattern()
+        for rule in ("pattern-no-code", "pattern-stale-code"):
+            self.assertEqual(self.found(rule, {"alpha": self.repo}), [])
+
+    def test_a_missing_file_is_stale_only_when_the_repo_is_given(self):
+        self.pattern(code="src/gone.py:1-2")
+        self.assertEqual(self.found("pattern-stale-code"), [])
+        hits = self.found("pattern-stale-code", {"alpha": self.repo})
+        self.assertEqual(len(hits), 1)
+        self.assertIn("src/gone.py", hits[0].detail)
+
+    def test_lines_past_the_end_of_the_file_are_stale(self):
+        for code in ("src/a.py:8-11", "src/a.py:11"):
+            self.pattern(code=code)
+            hits = self.found("pattern-stale-code", {"alpha": self.repo})
+            self.assertEqual(len(hits), 1, code)
+            self.assertIn("10 lines", hits[0].detail)
+
+    def test_a_single_line_a_whole_file_and_the_last_line_are_fine(self):
+        for code in ("src/a.py:3", "src/a.py", "src/a.py:10", "src/a.py:10-10"):
+            self.pattern(code=code)
+            self.assertEqual(self.found("pattern-stale-code", {"alpha": self.repo}), [], code)
+
+    def test_a_range_that_runs_backwards_or_is_not_numbers_is_stale(self):
+        for code in ("src/a.py:5-2", "src/a.py:x-y", "src/a.py:0-3"):
+            self.pattern(code=code)
+            self.assertEqual(len(self.found("pattern-stale-code", {"alpha": self.repo})), 1, code)
+
+    def test_a_list_of_citations_is_each_checked(self):
+        self.pattern(code="[src/a.py:1-2, src/gone.py:1-2]")
+        hits = self.found("pattern-stale-code", {"alpha": self.repo})
+        self.assertEqual(len(hits), 1)
+        self.assertIn("src/gone.py", hits[0].detail)
+
+    def test_a_path_that_leaves_the_repo_is_stale_and_never_read(self):
+        outside = os.path.join(os.path.dirname(self.repo), "outside.txt")
+        with open(outside, "w", encoding="utf-8") as f:
+            f.write("secret\n")
+        self.addCleanup(os.remove, outside)
+        os.symlink(outside, os.path.join(self.repo, "src", "link.py"))
+        for code in ("../outside.txt:1", "src/link.py:1", outside + ":1"):
+            self.pattern(code=code)
+            hits = self.found("pattern-stale-code", {"alpha": self.repo})
+            self.assertEqual(len(hits), 1, code)
+            self.assertIn("outside the repo", hits[0].detail)
+
+    def test_a_directory_is_not_a_cited_file(self):
+        self.pattern(code="src:1-2")
+        self.assertEqual(len(self.found("pattern-stale-code", {"alpha": self.repo})), 1)
+
+    def test_a_project_with_no_repo_given_is_not_checked(self):
+        self.pattern(code="src/gone.py:1-2", projects="[beta]")
+        self.assertEqual(self.found("pattern-stale-code", {"alpha": self.repo}), [])
+
+    def test_only_patterns_are_checked(self):
+        self.write("Other.md", fm(code="src/gone.py:1-2"))
+        self.assertEqual(self.found("pattern-stale-code", {"alpha": self.repo}), [])
+        self.assertEqual(self.found("pattern-no-code"), [])
+
+    def test_an_accepted_pattern_is_checked_too(self):
+        self.pattern(code=None, status="accepted")
+        self.assertEqual(len(self.found("pattern-no-code")), 1)
+
+    def test_the_command_takes_repo_and_never_fails_the_run_for_it(self):
+        self.pattern(code="src/gone.py:1-2")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = vl.main([self.root, "--repo", f"alpha={self.repo}"])
+        self.assertIn("pattern-stale-code", out.getvalue())
+        self.assertEqual(self.found("pattern-stale-code", {"alpha": self.repo})[0].severity, "warning")
+        self.assertIn(code, (0, 1))  # the unrelated test vault errors (pattern is not a listed type) decide it, not this rule
+
+    def test_a_repo_option_that_is_not_name_equals_path_is_a_usage_error(self):
+        for bad in ("alpha", "=x", f"alpha={self.repo}/nope"):
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                self.assertEqual(vl.main([self.root, "--repo", bad]), 2, bad)
+
+
 if __name__ == "__main__":
     unittest.main()

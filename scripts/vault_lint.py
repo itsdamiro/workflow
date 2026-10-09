@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Report where the vault breaks the rules of ADR 004 and ADR 010. Read-only: it never fixes a note.
 
-Usage: python3 scripts/vault_lint.py <vault-path> [--inbox-days N]
+Usage: python3 scripts/vault_lint.py <vault-path> [--inbox-days N] [--repo NAME=PATH ...]
 
 Reads every *.md under the vault except hidden folders. Errors (bad frontmatter, a missing field, an unknown type or
 status, a broken link, a bad tag, a duplicate name, a concept without a note) make the exit code 1. Warnings (no links,
 an orphan (not a draft pattern), no tags, an unlisted topic, a topic that spans one concept, a generated card with no date, a concept named
-by an old alias) nudge and never fail the run. Exit 2 is a usage error,
+by an old alias, a pattern that cites no code or code that is not in its project's repo, given with --repo) nudge and never fail the run. Exit 2 is a usage error,
 including a vault with no Tags.md or one that does not list the values of type/ and status/.
 """
 
@@ -267,8 +267,9 @@ def check_tags(note: Note, tags: Tags, projects: set[str]) -> list[Finding]:
     return out
 
 
-def lint(root: str, inbox_days: int = INBOX_DAYS, now: float | None = None) -> list[Finding]:
+def lint(root: str, inbox_days: int = INBOX_DAYS, now: float | None = None, repos: dict[str, str] | None = None) -> list[Finding]:
     now = time.time() if now is None else now
+    repos = {fold(name): path for name, path in (repos or {}).items()}
     with open(os.path.join(root, "Tags.md"), encoding="utf-8") as f:
         tags = read_tags(f.read())
     notes = read_vault(root)
@@ -287,6 +288,7 @@ def lint(root: str, inbox_days: int = INBOX_DAYS, now: float | None = None) -> l
     spans: dict[str, dict[str, set]] = {}  # topic -> decision card -> the concept notes it names (aliases resolved)
     for note in notes:
         findings += check_fields(note, tags) + ([] if note.problem else check_tags(note, tags, projects))
+        findings += check_citations(note, repos)
         resolved = set()
         for name, from_concepts in link_targets(note):
             if from_concepts:
@@ -348,16 +350,68 @@ def nudges(note: Note, resolved: set[str], notes: list[Note], now: float, inbox_
     return out
 
 
+CODE_RANGE = re.compile(r"(.+?):(\d+)(?:-(\d+))?")
+
+
+def check_citations(note: Note, repos: dict[str, str]) -> list[Finding]:
+    """A pattern cites the code it comes from, `path`, `path:line` or `path:first-last` (ADR 006). With the project's repo
+    known, each cited file must be a file inside it and the lines must exist; without it only the form is checked. A
+    warning only: cited lines drift as the code changes."""
+    if note.problem or note.fields.get("type") != "pattern":
+        return []
+    refs = [str(r) for r in as_list(note.fields.get("code"))]
+    if not refs:
+        return [Finding(note.path, "warning", "pattern-no-code", "cites no code (ADR 006): add `code: path:first-last`")]
+    root = next((repos[fold(str(p))] for p in as_list(note.fields.get("projects")) if fold(str(p)) in repos), None)
+    out = []
+    for ref in refs:
+        match = CODE_RANGE.fullmatch(ref)
+        path, first, last = (match.group(1), int(match.group(2)), int(match.group(3) or match.group(2))) if match else (ref, 0, 0)
+        if ":" in ref and (not match or first < 1 or last < first):
+            out.append(Finding(note.path, "warning", "pattern-stale-code", f"{ref} is not path, path:line or path:first-last"))
+        elif root is not None:
+            problem = citation_problem(root, path, first, last)
+            if problem:
+                out.append(Finding(note.path, "warning", "pattern-stale-code", f"{ref} {problem}"))
+    return out
+
+
+def citation_problem(root: str, path: str, first: int, last: int) -> str:
+    """Why a citation does not hold in the repo at `root`, or "". The path is resolved through symlinks and must stay
+    inside the repo before anything is opened."""
+    base = os.path.realpath(root)
+    target = os.path.realpath(os.path.join(base, path))
+    if os.path.commonpath([base, target]) != base:
+        return "is outside the repo"
+    if not os.path.isfile(target):
+        return "is not a file in the repo"
+    if last:
+        with open(target, "rb") as f:
+            count = sum(1 for _ in f)
+        if last > count:
+            return f"cites lines up to {last}, but the file has {count} lines"
+    return ""
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="Report where the vault breaks the rules of ADR 004 and 010.")
     parser.add_argument("vault")
     parser.add_argument("--inbox-days", type=int, default=INBOX_DAYS)
+    parser.add_argument("--repo", action="append", default=[], metavar="NAME=PATH",
+                        help="a project's repository, so a pattern's `code:` can be checked against it (repeatable)")
     args = parser.parse_args(argv)
+    repos = {}
+    for item in args.repo:
+        name, _, path = item.partition("=")
+        if not name or not os.path.isdir(path):
+            print(f"--repo {item}: expected NAME=PATH, where PATH is a directory")
+            return 2
+        repos[fold(name)] = path
     if not os.path.isfile(os.path.join(args.vault, "Tags.md")):
         print(f"no Tags.md in {args.vault}: not a vault, or the tag list is missing")
         return 2
     try:
-        findings = lint(args.vault, args.inbox_days)
+        findings = lint(args.vault, args.inbox_days, repos=repos)
     except ValueError as err:
         print(err)
         return 2

@@ -94,3 +94,11 @@ The first run reports the missing concept notes and whatever the owner's hand-wr
 - **Why:** the pattern scan at each `/handoff` (ADR 006) writes drafts that wait for the owner to read them, and the owner has no time to read each as it is made. Each one raised an orphan warning, so an unread draft looked like something wrong. Three of the four orphan warnings on 2026-10-09 were drafts.
 - **Decided by the owner:** an unlinked note with `type: pattern` and `status: draft` is not reported as an orphan. Once it is accepted (`status` changes) the check applies as to any note.
 - **Not changed:** every other check. A draft pattern with a broken link or a bad tag still fails.
+
+## Amendment (2026-10-09): a pattern must cite code that exists
+
+- **Why:** ADR 006 says a pattern candidate must cite the file and line range it comes from, and a draft carries that in its `code:` field. Nothing checked it, so a model could draft a pattern with no citation or a wrong one, and the owner would find out only on reading it. The owner has no time to read each draft, so the citation has to be checked by code (`docs/CODE_QUALITY_STANDARDS.md` §12).
+- **Decided by the owner:** the lint warns, never fails, on a note with `type: pattern` when (1) it has no `code:` (`pattern-no-code`), or (2) a citation is not `path`, `path:line` or `path:first-last`, or, when the project's repo is known, names a file that is not inside it, or lines past the end of the file (`pattern-stale-code`). A list of citations is checked one by one. The repo is given with the option `--repo NAME=PATH` (repeatable), and `scripts/close_slice.py` passes the project it closes; without the option only the first check and the form are tested.
+- **Why a warning:** cited lines drift as the code changes, so an old accepted pattern would fail every close for no fault of the owner's.
+- **Path safety:** the cited path is resolved through symlinks and must stay inside the repo before the file is opened, so a `..`, an absolute path or a symlink in a draft cannot make the lint read elsewhere.
+- **Not changed:** every other check. A draft pattern is still not an orphan (the amendment above).

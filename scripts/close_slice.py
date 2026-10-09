@@ -54,7 +54,8 @@ def main(argv: list[str]) -> int:
         print("close_slice: the stats line failed:", *stats, sep="\n  ", file=sys.stderr)
         return 2
 
-    code, lint = run("vault_lint.py", args.vault)
+    name = args.name or os.path.basename(os.path.realpath(args.project))
+    code, lint = run("vault_lint.py", args.vault, "--repo", f"{name}={args.project}")  # so a pattern's `code:` is checked
     totals = next((TOTALS.match(line.strip()) for line in reversed(lint) if TOTALS.match(line.strip())), None)
     if code not in (0, 1) or not totals:
         print("close_slice: the lint failed:", *lint, sep="\n  ", file=sys.stderr)

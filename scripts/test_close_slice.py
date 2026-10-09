@@ -3,6 +3,7 @@
 import contextlib
 import io
 import os
+import re
 import sys
 import tempfile
 import unittest
@@ -12,7 +13,7 @@ import close_slice as c  # noqa: E402
 import test_vault_lint as tl  # noqa: E402
 import test_vault_sync as ts  # noqa: E402
 
-TAGS = tl.TAGS.replace("folder-definition", "folder-definition, reference, index")
+TAGS = tl.TAGS.replace("folder-definition", "folder-definition, reference, index, pattern")
 FRONT = "---\ntype: {}\nstatus: {}\ncreated: 2026-10-08\ntags: [type/{}, status/{}, topic/mind]\n---\n"
 GARDEN = FRONT.format("project", "active", "project", "active") + "[[Tags]] [[demo]]\n"
 HUB = FRONT.format("project", "active", "project", "active") + "Back to [[Garden]]. [[demo - Rejected ideas]]\n"
@@ -61,6 +62,17 @@ class Close(unittest.TestCase):
         ts.put(self.vault, "Projects/demo/demo.md", HUB.replace("[[demo - Rejected ideas]]", "[[demo - Rejected ideas]] [[demo - Stats]]"))
         code, out, _ = self.close()
         self.assertEqual(code, 0, out)  # a link to the stats note resolves only if the stats step ran first
+
+    def test_the_lint_is_given_the_repo_so_a_pattern_citation_is_checked(self):
+        ts.put(self.vault, "Concepts/round-trip-frugality.md", CONCEPT)
+        draft = ("---\ntype: pattern\nstatus: draft\ncreated: 2026-10-08\nprojects: [demo]\ncode: {}\n"
+                 "tags: [type/pattern, status/draft, project/demo, topic/mind]\n---\nBack to [[Garden]].\n")
+        ts.put(self.vault, "Patterns/Cites.md", draft.format("docs/gone.md:1-2"))
+        _, missing, _ = self.close()
+        ts.put(self.vault, "Patterns/Cites.md", draft.format("docs/decisions/README.md:1-2"))
+        _, present, _ = self.close()
+        count = lambda out: int(re.search(r"(\d+) warning\(s\)", out).group(1))  # noqa: E731
+        self.assertEqual(count(missing), count(present) + 1)
 
     def test_a_dry_run_writes_nothing(self):
         ts.put(self.vault, "Concepts/round-trip-frugality.md", CONCEPT)
