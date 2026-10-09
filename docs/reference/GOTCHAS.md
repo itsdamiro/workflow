@@ -28,6 +28,11 @@
 - **Cause:** zsh expands a word that starts with `=` as a command lookup.
 - **Do this:** quote separators (`echo '--- title'`) or use `printf`.
 
+### A mod's button does nothing, and the app logs `ui_press not handled`
+- **Symptom:** the button draws and can be pressed, nothing happens, and the app log (`claude.ai-web.log`) has `engine surface: ui_press not handled` with the plugin and the key. The session guard's **Close slice** did this for two days (fixed in 0.3.0).
+- **Cause:** the press handler threw, the engine skipped that hook, and the app reports a skipped handler as "not handled". The engine's notes list other causes (no press site, a stale drawing, a key mismatch), which sent the first look at the load path and at redraws. Here the cause was `$.prompt.submit({ text: '/handoff' })`: the engine refuses a prompt that begins with `/`.
+- **Do this:** run a slash command with `$.command.run({ command, args })`. To tell a skipped handler from a stale drawing, press the button inside the plugin's own test (`claude plugin test <folder>`, with `$.ui.mount` and `press`), which prints the reason the hook was skipped; the app prints none. Hide a band only after the action has not thrown.
+
 ## 2. Recipes
 
 ### Re-run the context measurement (ADR 001)
