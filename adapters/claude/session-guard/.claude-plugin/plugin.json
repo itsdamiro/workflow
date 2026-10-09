@@ -1,6 +1,6 @@
 {
   "name": "session-guard",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Shows the context size and rate-limit use, and offers to close the slice when a session gets long. Advisory: never blocks.",
   "types": "./types/index.d.ts",
   "userConfig": {

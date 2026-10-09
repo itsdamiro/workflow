@@ -99,8 +99,15 @@ export const register: Register = (on, options) => {
             key="close"
             label="Close slice"
             onPress={async () => {
+              // The engine refuses a prompt that begins with "/" (it would run a command as the owner), and the app then
+              // reports the press as not handled: run the command itself. Hide the band only once that has not thrown.
+              const slash = /^\/(\S+)\s*(.*)$/.exec(opt.handoffPrompt)
+              if (slash) {
+                await $.command.run({ command: slash[1] ?? '', args: slash[2] ?? '' })
+              } else {
+                await $.prompt.submit({ text: opt.handoffPrompt, asUser: true })
+              }
               await update($, dismissed, () => u.level)
-              await $.prompt.submit({ text: opt.handoffPrompt, asUser: true })
             }}
           />
         ) : null}
