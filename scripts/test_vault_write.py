@@ -276,5 +276,69 @@ class AddLine(Case):
         self.assertEqual(self.read("Ideas/Notes.md"), NOTES)
 
 
+class AddValue(Case):
+    NO_CAPTURE = TAGS.replace(", capture", "")
+
+    def add(self, value="capture", namespace="type"):
+        return self.run_cli("add-value", "--namespace", namespace, "--value", value)
+
+    def test_a_value_goes_to_the_end_of_the_one_line_list_and_nothing_else_changes(self):
+        self.put("Tags.md", self.NO_CAPTURE)
+        self.assertEqual(self.add(), (0, "Tags.md\n", ""))
+        self.assertEqual(self.read("Tags.md"), TAGS)
+        self.put("Tags.md", self.NO_CAPTURE)
+        self.assertEqual(self.add("review", "status")[0], 0)
+        self.assertEqual(self.read("Tags.md"), self.NO_CAPTURE.replace("active\n", "active, review\n"))
+
+    def test_windows_line_ends_and_a_missing_final_newline_are_kept(self):
+        self.put("Tags.md", self.NO_CAPTURE.replace("\n", "\r\n"))
+        self.add()
+        self.assertEqual(self.read("Tags.md"), TAGS.replace("\n", "\r\n"))
+        self.put("Tags.md", self.NO_CAPTURE.replace("- `topic/`: the owner's own topics, added by hand\n", "")
+                 .replace("active\n- `project/`", "active\n- `project/`").rstrip("\n") + "\n- `type/`: x")
+        self.refused(self.add(), "exactly one")
+
+    def test_a_listed_value_a_bad_word_a_missing_or_doubled_line_or_a_punctuated_line_is_refused(self):
+        self.refused(self.add("idea"), "already listed")
+        for bad in ("Capture", "two words", "a/b", "x-", ""):
+            self.refused(self.add(bad), "kebab-case")
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):  # argparse rejects any namespace but type and status
+            self.add(namespace="topic")
+        self.put("Tags.md", self.NO_CAPTURE.replace("- `status/`: proposed, accepted, draft, active\n", ""))
+        self.refused(self.add("review", "status"), "no values for status")
+        self.put("Tags.md", self.NO_CAPTURE + "- `type/`: more\n")
+        self.refused(self.add(), "exactly one")
+        self.put("Tags.md", self.NO_CAPTURE.replace("folder-definition\n", "folder-definition.\n"))
+        self.refused(self.add(), "punctuation")
+        self.assertEqual(self.read("Tags.md"), self.NO_CAPTURE.replace("folder-definition\n", "folder-definition.\n"))
+
+    def test_a_vault_without_tags_md_is_refused(self):
+        os.remove(os.path.join(self.root, "Tags.md"))
+        self.refused(self.add(), "Tags.md")
+
+    def test_a_write_that_does_not_read_back_puts_the_old_content_back(self):
+        self.put("Tags.md", self.NO_CAPTURE)
+        def damaged(full, text):
+            with open(full, "w", encoding="utf-8") as f:
+                f.write(text[: len(text) // 2])
+        with mock.patch.object(vw, "_replace", damaged):
+            self.refused(self.add(), "put back")
+
+    def test_missing_values_names_what_the_writer_needs(self):
+        self.assertEqual(vw.missing_values(self.root), [])
+        self.put("Tags.md", self.NO_CAPTURE)
+        self.assertEqual(vw.missing_values(self.root), [("type", "capture")])
+        self.put("Tags.md", self.NO_CAPTURE.replace("draft, ", ""))
+        self.assertEqual(vw.missing_values(self.root), [("type", "capture"), ("status", "draft")])
+
+    def test_the_capture_that_failed_for_the_unlisted_type_works_after_the_value_is_added(self):
+        self.put("Tags.md", self.NO_CAPTURE)
+        self.refused(self.run_cli("capture", "--project", "alpha", "--source", self.source(), "--quote", QUOTE, "--title", "T",
+                                  "--about", "Idea", "--topic", "mind"), "unknown-type")
+        self.add()
+        self.assertEqual(self.run_cli("capture", "--project", "alpha", "--source", self.source(), "--quote", QUOTE, "--title", "T",
+                                      "--about", "Idea", "--topic", "mind")[0], 0)
+
+
 if __name__ == "__main__":
     unittest.main()

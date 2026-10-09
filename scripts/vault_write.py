@@ -5,6 +5,7 @@ Usage: python3 scripts/vault_write.py VAULT capture --project NAME --source FILE
                                               --about NOTE [--about NOTE ...] --topic WORD [--topic WORD ...]
        python3 scripts/vault_write.py VAULT new --path RELPATH --text-file FILE|-
        python3 scripts/vault_write.py VAULT add-line --path RELPATH --line TEXT [--under HEADING]
+       python3 scripts/vault_write.py VAULT add-value --namespace type|status --value WORD
 
 Every subcommand writes nothing and exits 1 with the reason on stderr if a check fails. The script cannot see the chat:
 that the owner approved the text is the caller's duty, and the report lists every write. It never replaces or deletes.
@@ -24,6 +25,7 @@ BAD_TITLE = re.compile(r'[\[\]#^|\\/:*?"<>\x00-\x1f]')
 HEADING = re.compile(r"^(#{1,6})[ \t]+(.*?)(?:[ \t]+#+)?[ \t]*$")
 MESSAGE_BREAK = "\f"  # the source file separates the owner's messages with a form feed
 FENCE = re.compile(r"^\s*(`{3,}|~{3,})")
+NEEDED = {"type": "capture", "status": "draft"}  # the values of Tags.md's closed lists that this script writes
 
 
 class Refused(Exception):
@@ -186,14 +188,46 @@ def add_line(root: str, a) -> str:
     eol = "\r\n" if "\r\n" in old else "\n"
     gap = eol if at and not lines[at - 1].endswith(("\n", "\r")) else ""
     expected = "".join(lines[:at]) + gap + a.line + eol + "".join(lines[at:])
+    write_checked(full, old, expected)
+    return a.path
+
+
+def write_checked(full: str, old: str, expected: str) -> None:
     _replace(full, expected)
     with open(full, encoding="utf-8", newline="") as f:
         written = f.read()
     if written != expected:
         with open(full, "w", encoding="utf-8", newline="") as f:  # put the old content back
             f.write(old)
-        raise Refused("the file did not read back as the old content plus the line; the old content was put back")
-    return a.path
+        raise Refused("the file did not read back as the old content plus the addition; the old content was put back")
+
+
+def missing_values(root: str) -> list[tuple[str, str]]:
+    """The values this script writes that Tags.md does not list, as (namespace, value)."""
+    tags, _ = vault_facts(root)
+    return [(ns, v) for ns, v in NEEDED.items() if v not in tags.closed[ns]]
+
+
+def add_value(root: str, a) -> str:
+    """Extend the one-line list of a closed namespace (type/, status/) in Tags.md by one value, at the end of the line."""
+    tags, _ = vault_facts(root)
+    if not vl.TAG.match(f"{a.namespace}/{a.value}"):
+        raise Refused(f"{a.value!r} is not a lowercase kebab-case word")
+    if a.value in tags.closed[a.namespace]:
+        raise Refused(f"{a.namespace}/{a.value} is already listed")
+    full = os.path.join(root, "Tags.md")
+    with open(full, encoding="utf-8", newline="") as f:
+        old = f.read()
+    lines = old.splitlines(keepends=True)
+    hits = [k for k, l in enumerate(lines) if re.match(rf"[ \t]*[-*][ \t]+`{a.namespace}/`[ \t]*:", l)]
+    if len(hits) != 1:
+        raise Refused(f"Tags.md does not have exactly one list line for {a.namespace}/")
+    body = lines[hits[0]].rstrip("\r\n")
+    if body.rstrip().endswith((".", ",")):
+        raise Refused(f"the {a.namespace}/ line ends in punctuation, so it is not a plain list to extend; the owner edits it")
+    lines[hits[0]] = body.rstrip() + f", {a.value}" + lines[hits[0]][len(body):]
+    write_checked(full, old, "".join(lines))
+    return "Tags.md"
 
 
 def main(argv: list[str]) -> int:
@@ -215,11 +249,14 @@ def main(argv: list[str]) -> int:
     d.add_argument("--path", required=True)
     d.add_argument("--line", required=True)
     d.add_argument("--under")
+    v = sub.add_parser("add-value")
+    v.add_argument("--namespace", required=True, choices=vl.CLOSED_NAMESPACES)
+    v.add_argument("--value", required=True)
     args = p.parse_args(argv)
     try:
         if not os.path.isdir(args.vault):
             raise Refused(f"{args.vault} is not a folder")
-        written = {"capture": capture, "new": new, "add-line": add_line}[args.kind](args.vault, args)
+        written = {"capture": capture, "new": new, "add-line": add_line, "add-value": add_value}[args.kind](args.vault, args)
     except Refused as err:
         print(f"refused: {err}", file=sys.stderr)
         return 1

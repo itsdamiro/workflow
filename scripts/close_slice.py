@@ -21,6 +21,8 @@ import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+import vault_write  # noqa: E402
 TOTALS = re.compile(r"^(\d+) error\(s\), (\d+) warning\(s\)$")
 
 
@@ -86,6 +88,8 @@ def main(argv: list[str]) -> int:
     print(f"lint:  {errors} error(s), {warnings} warning(s)")
     for line in (x for x in lint if ": error: " in x):
         print("       " + line)
+    for ns, value in vault_write.missing_values(args.vault):  # the lint passed, so Tags.md parses
+        print(f"       hint: Tags.md does not list {ns}/{value}, which vault_write.py writes; add-value --namespace {ns} --value {value} adds it")
     after = snapshot(args.vault)
     created = sorted(n for n in after if n not in before)
     updated = sorted(n for n in after if n in before and after[n] != before[n])

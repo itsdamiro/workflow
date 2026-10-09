@@ -51,6 +51,15 @@ class Close(unittest.TestCase):
         self.assertRegex(out, r"(?m)^lint:  0 error\(s\), \d+ warning\(s\)$")
         self.assertNotIn("do not push", out)
 
+    def test_a_hint_names_a_value_tags_md_lacks_that_the_writer_needs_and_stops_when_it_is_listed(self):
+        ts.put(self.vault, "Concepts/round-trip-frugality.md", CONCEPT)
+        code, out, _ = self.close()
+        self.assertEqual(code, 0, out)
+        self.assertIn("hint: Tags.md does not list type/capture", out)
+        self.assertNotIn("status/draft", out)
+        ts.put(self.vault, "Tags.md", TAGS.replace("folder-definition", "folder-definition, capture", 1))
+        self.assertNotIn("hint: Tags.md", self.close()[1])
+
     def test_a_lint_error_exits_1_lists_the_error_and_says_not_to_push(self):
         code, out, _ = self.close()  # the record names a concept that has no note
         self.assertEqual(code, 1)
