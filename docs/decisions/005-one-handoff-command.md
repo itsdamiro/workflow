@@ -91,3 +91,11 @@ One command from the owner's side. The work inside a long session costs tokens, 
 - **Limit:** the list covers this close's own writes. A note the owner edited by hand between closes is not in it; the vault's own git status would show that, and committing the vault is still undecided (amendment above).
 - **Alternatives rejected:** reading the vault's `git status` as the list: it accumulates across closes until someone commits the vault, so it cannot say what this close did. A list kept only in the handoff file: the handoff is rewritten each time and local-only, so the owner would not see it at the moment of the close.
 - **Follows:** `docs/sop/handoff.md` step 6 and its "Do not" list, SPEC §7, and `scripts/close_slice.py` with its test.
+
+## Amendment (2026-10-09): the Claude skill is manual-only, and the procedure is split by when it is needed
+
+- **Why:** the handoff commits and pushes, so a model deciding on its own that a slice was done was a risk as well as a cost: the skill's description sat in every session's context. The same reasoning applies to the procedure file, which every close read whole although most of it served one mode or one assistant.
+- **Done:** `template/skills/handoff/SKILL.md` sets `disable-model-invocation: true` (commit `994fab0`), so only the owner starting it runs it, by typing `/handoff` or pressing **Close slice** in the session guard. Both were confirmed to work on 2026-10-09. The text of the procedure is split into `docs/sop/handoff.md` (always read), `docs/sop/handoff-full.md` (read only in `full`) and `docs/sop/handoff-gemini.md` (read only under Gemini CLI; the Gemini command loads it with the first). A Claude light close reads 8,267 of what was 11,685 bytes.
+- **Not changed:** the two closes, what each step does, and the rule that running `/handoff` is the owner's go-ahead to commit and push the slice.
+- **Unverified:** that `handoff` no longer appears among the skills the assistant can call in a fresh session.
+- **Follows:** `docs/sop/README.md`, `template/commands/handoff.toml` with `template/test_install.sh`, and `template/README.md`.

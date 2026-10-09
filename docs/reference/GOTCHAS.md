@@ -28,6 +28,11 @@
 - **Cause:** zsh expands a word that starts with `=` as a command lookup.
 - **Do this:** quote separators (`echo '--- title'`) or use `printf`.
 
+### In zsh an unquoted `${N:+--opt $N}` passes the option and its value as one argument
+- **Symptom:** `close_slice.py: error: unrecognized arguments: --context-tokens 172415`, with the option and its value printed as one word.
+- **Cause:** zsh does not split an unquoted expansion on spaces (bash does), so `${N:+--context-tokens $N}` is a single argument.
+- **Do this:** write the option out (`--context-tokens "$N"`), or branch with `if [ -n "$N" ]`. It hit two closes on 2026-10-09.
+
 ### A mod's button does nothing, and the app logs `ui_press not handled`
 - **Symptom:** the button draws and can be pressed, nothing happens, and the app log (`claude.ai-web.log`) has `engine surface: ui_press not handled` with the plugin and the key. The session guard's **Close slice** did this for two days (fixed in 0.3.0).
 - **Cause:** the press handler threw, the engine skipped that hook, and the app reports a skipped handler as "not handled". The engine's notes list other causes (no press site, a stale drawing, a key mismatch), which sent the first look at the load path and at redraws. Here the cause was `$.prompt.submit({ text: '/handoff' })`: the engine refuses a prompt that begins with `/`.

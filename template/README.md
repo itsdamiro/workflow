@@ -39,7 +39,7 @@ coding-standards/
 │   ├── md_wrap_check.py               fails on hard-wrapped Markdown prose (a gate; test_md_wrap_check.py beside it)
 │   └── adr_check.py                   fails on a decision record without frontmatter, a summary or an index row (a gate; ADR 012)
 ├── commands/
-│   └── handoff.toml           Gemini `/handoff`: injects docs/sop/handoff.md with a shell `cat` (an `@{}` path must be inside the workspace); install.sh fills in this checkout's path
+│   └── handoff.toml           Gemini `/handoff`: injects docs/sop/handoff.md and handoff-gemini.md with a shell `cat` (an `@{}` path must be inside the workspace); install.sh fills in this checkout's path
 ├── hooks/
 │   ├── git_safety.py          PreToolUse hook; blocks the git commands that lose work or leave a trace
 │   └── test_git_safety.py     both paths of every rule (python3 -m unittest discover -s hooks)

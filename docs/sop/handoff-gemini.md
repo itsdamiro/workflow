@@ -1,0 +1,13 @@
+# SOP: `/handoff` under Gemini CLI
+
+Read this when the assistant is Gemini CLI, together with `docs/sop/handoff.md`; the Gemini command loads both. Under any other assistant it is not needed.
+
+The command is `/handoff` (`/handoff full` adds the checks; `check` means the same; `template/commands/handoff.toml`, written to `~/.gemini/commands/` by `template/install.sh`; ADR 005 and the SPEC §7 table are the design). It is untested in Gemini as of its commit. Without the command, the owner says "follow `docs/sop/handoff.md` and `docs/sop/handoff-gemini.md`" and the same steps apply. What differs from Claude Code:
+
+- **Loading the procedure.** The command loads this file and `docs/sop/handoff.md` with shell `cat`s, so Gemini asks the owner to confirm that first. It does not use `@{}`, because Gemini allows an absolute `@{}` path only inside the workspace and the workflow repository is usually outside the project's. If a context file is missing, say so and stop rather than improvise.
+- **Confirmations.** Gemini asks before each shell command, and the git-safety hook is Claude-only. The rules in "Do not" bind you all the same: stage named files, no trailer, no force-push, and commit and push only inside this procedure. The `scripts/` of the workflow repository are run by their full path.
+- **The vault path** comes from the owner's message, else from the terms at the top of the project's `docs/HANDOFF.md`, else ask.
+- **The owner's messages (step 3b).** There is no Gemini reader for them, so propose no captures; new notes and lines for the gaps step 2 reported still apply.
+- **The context size (step 2).** There is no Gemini adapter for it, so leave `--context-tokens` out and the row shows a dash (ADR 015 covers the Claude one only).
+- **There is no `/code-review` or `/simplify` (`full` only).** Do the two reviews of the slice's diff yourself, as a reader looking for faults rather than as its author: for correctness, wrong logic, unhandled cases, a caller or test the change breaks, and a path read from git without checking what it is; for over-engineering, `docs/CLOSING_A_SLICE.md` step 5b's list. Give each finding as `file:line`, then fix it (tests first, gates after) or decline it with one line. Say in the report that the review was the same model that wrote the code, so it is weaker than an independent one; a second session with no access to this conversation, or the owner's own read, is stronger.
+- **The fresh-reader check (`full` only)** needs a reader with no access to this conversation: a new Gemini session pointed only at `docs/HANDOFF.md`, or another assistant. If neither is available, see `docs/sop/handoff-full.md`.

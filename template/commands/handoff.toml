@@ -14,4 +14,6 @@ The vault path comes from the arguments, else from the terms at the top of the p
 Running this command is the owner's go-ahead to commit the slice's named files and push (ADR 005 amendment). Outside it, commit and push only when the owner says so.
 
 !{cat "__WORKFLOW__/docs/sop/handoff.md"}
+
+!{cat "__WORKFLOW__/docs/sop/handoff-gemini.md"}
 """

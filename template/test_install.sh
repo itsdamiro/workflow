@@ -15,6 +15,8 @@ HOME="$tmp" "$here/install.sh" >/dev/null 2>&1
 grep -q '__WORKFLOW__' "$cmd"; [ $? != 0 ]; ok $? "no placeholder is left"
 grep -qF '!{cat "'"$root"'/docs/sop/handoff.md"}' "$cmd"; ok $? "the command injects this checkout's procedure, by shell so it works outside the workspace"
 [ -s "$root/docs/sop/handoff.md" ]; ok $? "the procedure the command points at exists"
+grep -qF '!{cat "'"$root"'/docs/sop/handoff-gemini.md"}' "$cmd"; ok $? "the command also injects the Gemini differences"
+[ -s "$root/docs/sop/handoff-gemini.md" ]; ok $? "the Gemini file the command points at exists"
 grep -qF '{{args}}' "$cmd"; ok $? "the arguments reach the prompt"
 python3 -c 'import sys,tomllib; d=tomllib.load(open(sys.argv[1],"rb")); assert d["prompt"] and d["description"]' "$cmd"; ok $? "the command is valid TOML with a prompt and a description"
 

@@ -1,0 +1,7 @@
+# SOP: the checks of `/handoff full`
+
+Read this only for `/handoff full` (or `check`), as part of `docs/sop/handoff.md`; a plain close never needs it. The two independent checks (ADR 005, amendments of 2026-10-08 and 2026-10-09):
+
+- **Before step 1's commit, the two reviews of `docs/CLOSING_A_SLICE.md` step 5, together** over the slice's diff (the uncommitted changes, or else `git diff <ref>..HEAD` from the last handoff). Correctness: run `/code-review`, saying the level first: `high`, unless the owner named another. Over-engineering: a reader who did not write the code (a read-only subagent, or `/simplify`) is asked whether every new thing earns its place, using step 5b's list. Fix the findings of both in one round: each real finding (tests first, gates after; a simplification must not change behaviour a test pins) or decline it with one line saying why. Step 1 commits only after that.
+- **Between steps 4 and 5, the fresh-reader check:** follow `docs/sop/check-a-handoff.md`. A new session, or another model with no access to this conversation, reads only the handoff and its pointers and answers the six questions. Every wrong or hesitant answer is a line to fix; fix it and ask again.
+- **A check is never skipped, and never run without saying so.** If one cannot run (no reviewer or subagent is available, the session was interrupted), the report names which and why, and the close is not complete. They cost minutes and a subagent per round, which is why they belong to `full` and not to every close.
