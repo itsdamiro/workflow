@@ -24,7 +24,7 @@ coding-standards/
 ├── CONTRIBUTING.snippet.md    → paste into <project>/CONTRIBUTING.md (the committed home of the no-trace policy)
 ├── docs/
 │   ├── COLLABORATION_STANDARDS.md   how the assistant behaves; where each kind of thing is written
-│   ├── CODE_QUALITY_STANDARDS.md    the engineering process; §12 is "enforce by code, not wording"
+│   ├── CODE_QUALITY_STANDARDS.md    the engineering process every task needs; §12 is "enforce by code, not wording"
 │   ├── CLOSING_A_SLICE.md           the checklist, with "return to" lines
 │   ├── HANDOFF.template.md          → docs/HANDOFF.md: volatile facts only, under 60 lines
 │   ├── VAULT_CONVENTIONS.md         names, fields, tags and links, so the owner's vault can read the records
@@ -32,7 +32,8 @@ coding-standards/
 │   ├── sop/write-an-adr.md          write a decision record before the code
 │   ├── sop/rename-a-concept.md      name a concept, and rename one without breaking records
 │   ├── sop/check-a-handoff.md       test a handoff with a fresh reader (a copy of docs/sop/check-a-handoff.md)
-│   └── reference/GOTCHAS.template.md  → docs/reference/GOTCHAS.md: traps and recipes (the durable half)
+│   ├── reference/GOTCHAS.template.md  → docs/reference/GOTCHAS.md: traps and recipes (the durable half)
+│   └── reference/CODE_REVIEW_STANDARDS.md  tooling, review tiers, triage, type safety: read only when the task changes or reviews code
 ├── scripts/
 │   ├── gates (+ gates.conf.template)  every gate, one line each, failures show their last lines
 │   ├── mutate.py                      mutation check for new tests; restores from a copy, never git

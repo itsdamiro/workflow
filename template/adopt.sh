@@ -18,6 +18,7 @@ pairs=(
   "CLAUDE.template.md|CLAUDE.md"
   "docs/COLLABORATION_STANDARDS.md|docs/COLLABORATION_STANDARDS.md"
   "docs/CODE_QUALITY_STANDARDS.md|docs/CODE_QUALITY_STANDARDS.md"
+  "docs/reference/CODE_REVIEW_STANDARDS.md|docs/reference/CODE_REVIEW_STANDARDS.md"
   "docs/CLOSING_A_SLICE.md|docs/CLOSING_A_SLICE.md"
   "docs/HANDOFF.template.md|docs/HANDOFF.md"
   "docs/reference/GOTCHAS.template.md|docs/reference/GOTCHAS.md"

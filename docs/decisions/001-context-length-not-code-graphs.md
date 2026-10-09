@@ -40,3 +40,11 @@ Savings depend on the owner restarting at slice boundaries; the guard only remin
 
 - **A code graph for navigation.** The share it could replace is about 2% on the measured project. It would be right again if a project showed many multi-file exploration turns that were not edits.
 - **Automatic compaction only.** It lowers the context but loses detail without the owner's review; a written handoff keeps what matters.
+
+## Amendment (2026-10-09): the always-read standards are split by when they are needed
+
+- **Why:** the baseline of every session is the files `CLAUDE.md` tells it to read first, and `docs/CODE_QUALITY_STANDARDS.md` was the largest, 17,241 bytes, of which §§1 to 6 (tooling, review tiers, triage, type safety) serve only a task that changes or reviews code. It is the same reasoning as the `handoff.md` split in ADR 005's amendment.
+- **Done:** `docs/CODE_QUALITY_STANDARDS.md` keeps the rules every task needs (§0's working rules and §§7 to 13) and is 9,847 bytes. Sections 1 to 6 and four code rules from §0 (file-size cap, settings declared once, path safety, thread safety) moved, unchanged, to `docs/reference/CODE_REVIEW_STANDARDS.md` (7,162 bytes), read only for a code task. Section numbers are kept, so a citation such as `CODE_QUALITY_STANDARDS.md` §7 still finds its text. The template carries both files (this repo's `docs/` links to them), `template/adopt.sh` installs the second, and the template is version 17.
+- **Dropped:** the footer crediting the Sympose audit, at the owner's word; the history keeps it.
+- **Limit:** the reference file is read only if the assistant chooses to; nothing enforces it. A code task that skips it loses the review rules, not the working rules.
+- **Alternatives rejected:** shortening every section in place: it keeps the code-only text in every session and rewrites wording that has paid for itself. Renumbering after the move: other files cite §7, §9 and §12.

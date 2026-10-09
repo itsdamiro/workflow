@@ -35,7 +35,7 @@ git status -sb           # whether anything is uncommitted or unpushed
 
 - Working rules: `CLAUDE.md`, `docs/COLLABORATION_STANDARDS.md`, `docs/CODE_QUALITY_STANDARDS.md`
 - How a slice is closed: `docs/CLOSING_A_SLICE.md`
-- Traps and recipes: `docs/reference/GOTCHAS.md`
+- Traps and recipes: `docs/reference/GOTCHAS.md`. Code rules, read only when the task changes or reviews code: `docs/reference/CODE_REVIEW_STANDARDS.md`
 - Decisions: `docs/decisions/`
 - Why the project exists: `docs/VISION.md` *(if the project has one)*
 
