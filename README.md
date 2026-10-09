@@ -8,7 +8,7 @@ A model-agnostic workflow for AI-assisted software projects: decisions, handoffs
 
 An AI assistant starts every session knowing nothing, and long sessions get expensive because the whole conversation is re-read on every message. This project makes three things cheap:
 
-1. **Handing a session over.** One procedure, `/handoff`, closes a slice of work: it commits and pushes the slice, updates the vault, scans for patterns, writes the handoff, adds a stats row and reports. It includes a `/code-review` and an over-engineering review of the slice's diff before the commit and a fresh-reader test of the handoff.
+1. **Handing a session over.** One procedure, `/handoff`, closes a slice of work: it commits and pushes the slice, updates the vault, scans for patterns, writes the handoff, adds a stats row and reports. `/handoff full` adds a `/code-review` and an over-engineering review of the slice's diff before the commit and a fresh-reader test of the handoff.
 2. **Remembering decisions.** Each project keeps decision records (ADRs); a script turns them into short, linked notes.
 3. **Connecting ideas across projects and outside sources.** The notes live in one Obsidian vault, organised by project, concept and pattern, so a decision in one project can meet an idea from another.
 

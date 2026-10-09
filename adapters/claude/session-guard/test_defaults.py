@@ -46,7 +46,7 @@ class Defaults(unittest.TestCase):
 
     def test_the_close_button_submits_the_handoff_command(self):  # ADR 005: one entry point, so a change of command is a recorded decision
         self.assertEqual(declared()["handoffPrompt"], "/handoff")
-        self.assertNotIn("handoffCheckPrompt", declared())  # ADR 005, amendment of 2026-10-09: the reviews and the check are part of every close
+        self.assertNotIn("handoffCheckPrompt", declared())  # ADR 005, amendment of 2026-10-09: the checks are `/handoff full`, typed on purpose, never a second button
 
 
 if __name__ == "__main__":

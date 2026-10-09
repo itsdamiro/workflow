@@ -31,7 +31,7 @@ ADR 004 says "a lint enforces all of the above" and SPEC §4 lists five checks i
    - `unknown-type`, `unknown-status`: the value is not in the lists in `Tags.md`.
    - `broken-link`: a body or frontmatter link whose target is no note in the vault. A `#Heading` part is not checked.
    - `no-links` (warning): a note with no outgoing link. The report lists the names of notes the text mentions without linking ("could link: Foo, Bar"), found by plain string match, so the fix is one edit. `Inbox/` is exempt for `--inbox-days` days (default 14, the owner's choice; counted from the file's modification time), then it is reported.
-   - `orphan` (warning): a note nothing links to, outside `Inbox/`. Orphans are tolerated, so this never fails the run; the root note `Garden.md` is not reported.
+   - `orphan` (warning): a note nothing links to, outside `Inbox/`. Orphans are tolerated, so this never fails the run; the root note `Garden.md` and a pattern still marked `status: draft` are not reported (amendment of 2026-10-09).
    - `no-tags` (warning): a note with no tags, and, for `decision`, `concept`, `pattern`, `idea` and `source` notes, no `topic/` tag.
    - `unlisted-topic` (warning): a `topic/` tag that is neither listed in `Tags.md` (written `topic/name` in backticks) nor the name of a note. `topic/` tags are free-form: any may be used, and the warning is the nudge to list it in `Tags.md` and, better, to give it a note of its own to refer to. It matters most for a coined word or a name (Sympose, Stylo), which a reader cannot guess. The report names the tag and the notes using it.
    - `bad-tag`: a tag whose namespace is not listed, a `type/` or `status/` tag whose value is not listed, a `type/` or `status/` tag that disagrees with the field, a `project/` tag with no folder under `Projects/`, or any tag not lowercase kebab-case.
@@ -88,3 +88,9 @@ The first run reports the missing concept notes and whatever the owner's hand-wr
 
 - **Why:** the lint removed inline code with a pattern that allowed no backtick inside the span, so a span written with two backticks to hold one (CommonMark, and what Obsidian renders) left its contents visible, and a `[[link]]` inside it counted as a link. A commit subject with a backtick in it, copied into the stats note (ADR 014), hit this.
 - **Rule:** a run of backticks opens a span that the next run of the same length closes, on one line. The code fences and the single-backtick case are unchanged. Tested in `scripts/test_vault_lint.py`.
+
+## Amendment (2026-10-09): a draft pattern is not an orphan
+
+- **Why:** the pattern scan at each `/handoff` (ADR 006) writes drafts that wait for the owner to read them, and the owner has no time to read each as it is made. Each one raised an orphan warning, so an unread draft looked like something wrong. Three of the four orphan warnings on 2026-10-09 were drafts.
+- **Decided by the owner:** an unlinked note with `type: pattern` and `status: draft` is not reported as an orphan. Once it is accepted (`status` changes) the check applies as to any note.
+- **Not changed:** every other check. A draft pattern with a broken link or a bad tag still fails.

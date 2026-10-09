@@ -11,7 +11,7 @@ tags: [type/decision, status/accepted, project/workflow, topic/vault, topic/patt
 
 # 005 — One `/handoff` procedure closes a slice
 
-> **Summary.** A single procedure commits and pushes the slice, runs the vault sync, the lints, the pattern scan and the handoff draft, and reports what awaits the owner's acceptance. The two reviews of `docs/CLOSING_A_SLICE.md` step 5 (correctness, and over-engineering) before the commit and a fresh-reader test of the handoff are part of every run.
+> **Summary.** A single procedure commits and pushes the slice, runs the vault sync, the stats line and the lint as one script, scans the diff for patterns, drafts the handoff and reports what needs the owner. It has two modes: `/handoff`, the light close, and `/handoff full`, which adds the two reviews of the diff and a fresh-reader test of the handoff.
 
 ## Context
 
@@ -67,3 +67,16 @@ One command from the owner's side. The work inside a long session costs tokens, 
 - **The session guard** has one close button again. **Close + check** and its `handoffCheckPrompt` setting are removed (plugin version 0.2.0), since both buttons would run the same close.
 - **Cost, accepted:** a close takes minutes and a subagent per round; the first full run took about eight minutes for the fresh-reader check alone.
 - **Follows:** `docs/sop/handoff.md`, the `handoff` skill, the Gemini command, SPEC §7 and §8, and the session guard's README are amended to match.
+
+## Amendment (2026-10-09): two closes, and one script for the mechanical steps
+
+- **Why, in the owner's words:** the close had become "kinda ritual with no sense". The project exists "to make use of the available time, not really to be a real job", so a step is judged by whether it asks for the owner's attention, not by whether it costs the assistant effort. The pattern drafts "are ok", the owner just has no time to read them as they are made; a draft that waits quietly costs nothing, while a report to read, an item under "Waiting on the owner" or a lint warning does.
+- **Decided by the owner:** `/handoff` is the light close: the ground check, the commit, the one script below, the pattern scan, the handoff draft, the push and a short report. `/handoff full` is that close plus the two reviews of the diff (before the commit) and the fresh-reader check (after the draft). `full` is for a slice that changes code the owner will rely on, or when the owner says so; the session guard's button submits plain `/handoff`. This replaces the amendment of 2026-10-09 (the reviews and the check "part of every close"). `check` is accepted and means `full`, which is what it meant before that amendment.
+- **The assistant does not choose the mode.** A plain close never runs the reviews. When the diff changed a script, a hook, an adapter or a decision record's Decision section, the report says in one line "reviews not run: `/handoff full` runs them", so the omission is stated and not silent.
+- **One script for the mechanical steps.** `scripts/close_slice.py <project> <vault> [--context-tokens N]` runs the vault sync, the stats line and the lint, in that order (so the lint also reads the stats note), and prints one short block. Exit 0: push may go ahead. Exit 1: the lint has an error, do not push. Exit 2: a script could not run. The close goes from eight steps to six, and the three runs are one command that a model without the habit cannot reorder or half-do. Refusals and hints are printed and do not stop the close.
+- **The pattern scan stays in both closes and is silent** (ADR 006 unchanged otherwise). Drafts land as `status: draft` in `Patterns/` and wait; the report gives one count line or nothing, and a draft is never listed as waiting on the owner. The lint no longer warns that a draft pattern is an orphan (ADR 010, amendment of the same day).
+- **The report** shrinks to what needs the owner: what failed or was refused, what was committed and pushed, and what the owner must accept. What ran successfully gets no narration.
+- **Alternatives rejected:** a third mode (`check` as its own close): three names for two closes. Choosing `full` automatically from the size of the diff: an unpredictable cost, and a rule the owner cannot see. Dropping the reviews: they are still the only independent read of the code; they just do not belong on every close.
+- **Enforcement, and its limit:** the reviews and the fresh-reader rounds are model work, so a script cannot prove they ran (`docs/CODE_QUALITY_STANDARDS.md` §12: the layer is wording plus a report line). In `full`, a check that cannot run is named in the report and the close is not complete.
+- **Not decided here:** committing the vault's own git repository after a sync (it is a repository with a private remote; no step covers it yet), and capturing the owner's reasoning from the conversation (ADRs carry the why; whether more is needed waits for evidence).
+- **Follows:** `docs/sop/handoff.md`, the `handoff` skill, the Gemini command, `docs/CLOSING_A_SLICE.md` step 5, SPEC §7 and §8, the README files and the session guard's README are amended to match.

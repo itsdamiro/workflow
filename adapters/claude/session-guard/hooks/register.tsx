@@ -13,7 +13,7 @@ const DEFAULTS = {
   softTokens: 150000,
   hardTokens: 200000,
   limitPercent: 80,
-  handoffPrompt: '/handoff', // the one entry point: the handoff skill, which follows docs/sop/handoff.md (reviews and fresh-reader check included, ADR 005)
+  handoffPrompt: '/handoff', // the one entry point: the handoff skill, which follows docs/sop/handoff.md (the light close; `/handoff full` adds the reviews and the fresh-reader check, ADR 005)
 }
 
 const k = (n: number) => `${Math.round(n / 1000)}k`

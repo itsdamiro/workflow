@@ -46,7 +46,7 @@ coding-standards/
 └── skills/
     ├── closing-a-slice/       runs the project's CLOSING_A_SLICE.md
     ├── checking-a-handoff/    tests a handoff with a fresh reader and six questions
-    └── handoff/               `/handoff`: follows docs/sop/handoff.md (vault sync and lint, pattern scan, new handoff; includes a code review, an over-engineering review and a fresh-reader test)
+    └── handoff/               `/handoff`: follows docs/sop/handoff.md (vault sync, stats line and lint as one script, pattern scan, new handoff; `full` adds a code review, an over-engineering review and a fresh-reader test)
 ```
 
 The `.template.md` suffixes are deliberate: the machine-wide gitignore (`.gitignore_global`) excludes a literal `CLAUDE.md` / `GEMINI.md`, which is what keeps AI-tooling config out of every repository. `adopt.sh` renames them. To have the same machine-wide ignore, point git at a global ignore file (`git config --global core.excludesFile ~/.gitignore_global`) and put the no-trace block from `CONTRIBUTING.snippet.md` in it. Without one, `adopt.sh` still adds the block to each project's own `.gitignore`.

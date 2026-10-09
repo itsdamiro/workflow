@@ -481,6 +481,12 @@ class Nudges(VaultCase):
         found = self.hits("orphan")
         self.assertEqual([(f.path, f.severity) for f in found], [("A.md", "warning")])
 
+    def test_a_draft_pattern_waits_unlinked_but_an_accepted_one_is_an_orphan(self):
+        self.write("Patterns/Draft.md", fm(type="pattern", status="draft", tags="[type/pattern, status/draft, topic/mind]"))
+        self.write("Patterns/Kept.md", fm(type="pattern", status="accepted", tags="[type/pattern, status/accepted, topic/mind]"))
+        self.write("Tags.md", TAGS.replace("idea, project", "idea, pattern, project"))
+        self.assertEqual([f.path for f in self.hits("orphan")], ["Patterns/Kept.md"])
+
     def test_garden_is_exempt_even_when_nothing_links_to_it(self):
         self.write("Tags.md", TAGS.replace("[[Garden]]", "home"))
         self.write("Idea.md", fm().replace("[[Garden]]", "[[Tags]]"))

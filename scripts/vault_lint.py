@@ -5,7 +5,7 @@ Usage: python3 scripts/vault_lint.py <vault-path> [--inbox-days N]
 
 Reads every *.md under the vault except hidden folders. Errors (bad frontmatter, a missing field, an unknown type or
 status, a broken link, a bad tag, a duplicate name, a concept without a note) make the exit code 1. Warnings (no links,
-an orphan, no tags, an unlisted topic, a topic that spans one concept, a generated card with no date, a concept named
+an orphan (not a draft pattern), no tags, an unlisted topic, a topic that spans one concept, a generated card with no date, a concept named
 by an old alias) nudge and never fail the run. Exit 2 is a usage error,
 including a vault with no Tags.md or one that does not list the values of type/ and status/.
 """
@@ -311,7 +311,8 @@ def lint(root: str, inbox_days: int = INBOX_DAYS, now: float | None = None) -> l
                 if note.fields.get("type") == "decision":
                     spans.setdefault(tag[6:], {})[note.path] = {concepts.get(fold(c), c) for c in concept_names(note)}
     for note in notes:
-        if not note.path.startswith("Inbox/") and note.path != "Garden.md" and fold(note.name) not in linked:
+        draft_pattern = note.fields.get("type") == "pattern" and note.fields.get("status") == "draft"  # waits for the owner, ADR 010
+        if not (note.path.startswith("Inbox/") or note.path == "Garden.md" or draft_pattern) and fold(note.name) not in linked:
             findings.append(Finding(note.path, "warning", "orphan", "no note links here"))
     for topic, users in sorted(topics.items()):
         if topic not in tags.topics and topic.replace("-", " ") not in by_name and topic not in by_name:
