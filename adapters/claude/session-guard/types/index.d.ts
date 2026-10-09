@@ -4,6 +4,6 @@ export type GuardUsage = { tokens: number | null; level: GuardLevel; limits: Gua
 
 declare module 'claude-code' {
   interface PluginState {
-    'session-guard': { usage: GuardUsage | null; dismissed: GuardLevel }
+    'SESSION': { usage: GuardUsage | null; dismissed: GuardLevel }
   }
 }

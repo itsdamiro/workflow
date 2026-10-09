@@ -19,7 +19,7 @@ for (const surface of ['terminal', 'desktop'] as const) {
 
     await $.session.start({ cwd: '/tmp' })
     const band = await $.ui.mount({
-      plugin: 'session-guard',
+      plugin: 'SESSION',
       surface,
       component: 'AbovePrompt',
       props: { hasSurvey: false, isWorking: false },

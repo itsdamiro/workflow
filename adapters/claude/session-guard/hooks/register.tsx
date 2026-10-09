@@ -3,8 +3,8 @@ import type { EngineInterface, Register } from 'claude-code'
 
 import type { GuardLevel, GuardUsage } from '../types'
 
-const usage = atom({ plugin: 'session-guard', key: 'usage' } as const, null)
-const dismissed = atom({ plugin: 'session-guard', key: 'dismissed' } as const, 'ok' as GuardLevel)
+const usage = atom({ plugin: 'SESSION', key: 'usage' } as const, null)
+const dismissed = atom({ plugin: 'SESSION', key: 'dismissed' } as const, 'ok' as GuardLevel)
 
 const RANK: Record<GuardLevel, number> = { ok: 0, soft: 1, hard: 2 }
 // The same values are declared in .claude-plugin/plugin.json (the config menu and the host read them there);
