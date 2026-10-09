@@ -4,7 +4,8 @@
 Usage: python3 scripts/close_slice.py <project-path> <vault-path> [--name NAME] [--ref REF] [--context-tokens N] [--dry-run]
 
 Runs scripts/vault_sync.py, scripts/stats_line.py and scripts/vault_lint.py in that order (so the lint also reads the
-stats note) and prints one short block: the sync's counts, the stats row, and the lint's errors (every one) and warning count. Refusals and hints are
+stats note) and prints one short block: the sync's counts, the stats row, the lint's errors (every one) and warning count, and the vault notes the close
+created and updated, by path (a hash of every Markdown file before and after; ADR 005, amendment of 2026-10-09). Refusals and hints are
 printed as the scripts print them; they are for the owner to settle and do not stop the close. Exit 0: the lint had no
 error, so the push may go ahead. Exit 1: the lint had an error, so do not push. Exit 2: a script could not run, or a
 usage error.
@@ -13,6 +14,7 @@ usage error.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import re
 import subprocess
@@ -25,6 +27,19 @@ TOTALS = re.compile(r"^(\d+) error\(s\), (\d+) warning\(s\)$")
 def run(script: str, *args: str) -> tuple[int, list[str]]:
     done = subprocess.run([sys.executable, os.path.join(HERE, script), *args], capture_output=True, encoding="utf-8", errors="replace")
     return done.returncode, (done.stdout + done.stderr).splitlines()
+
+
+def snapshot(vault: str) -> dict[str, str]:
+    """A hash for every Markdown note in the vault, by path from its root; hidden folders (.obsidian, .git) are skipped."""
+    notes = {}
+    for folder, dirs, files in os.walk(vault):
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
+        for name in files:
+            if name.endswith(".md") and not name.startswith("."):
+                path = os.path.join(folder, name)
+                with open(path, "rb") as f:
+                    notes[os.path.relpath(path, vault)] = hashlib.sha1(f.read()).hexdigest()
+    return notes
 
 
 def lines_of(output: list[str], *prefixes: str) -> list[str]:
@@ -45,6 +60,7 @@ def main(argv: list[str]) -> int:
     dry = ["--dry-run"] if args.dry_run else []
     context = ["--context-tokens", str(args.context_tokens)] if args.context_tokens is not None else []
 
+    before = snapshot(args.vault)
     code, sync = run("vault_sync.py", *shared, *named, *dry)
     if code not in (0, 1):  # 1 is a refusal, which is reported; anything else is a failure
         print("close_slice: the sync failed:", *sync, sep="\n  ", file=sys.stderr)
@@ -70,6 +86,18 @@ def main(argv: list[str]) -> int:
     print(f"lint:  {errors} error(s), {warnings} warning(s)")
     for line in (x for x in lint if ": error: " in x):
         print("       " + line)
+    after = snapshot(args.vault)
+    created = sorted(n for n in after if n not in before)
+    updated = sorted(n for n in after if n in before and after[n] != before[n])
+    if args.dry_run:
+        print("vault: nothing written (dry run)")
+    elif not created and not updated:
+        print("vault: no note changed")
+    else:
+        print(f"vault: {len(created)} note(s) created, {len(updated)} updated")
+        for label, names in (("created", created), ("updated", updated)):
+            for note in names:
+                print(f"       {label}: {note}")
     if errors:
         print("do not push: the lint has an error")
     return 1 if errors else 0

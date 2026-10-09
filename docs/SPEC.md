@@ -111,7 +111,7 @@ One procedure, run when a slice's work is done (`docs/sop/handoff.md`); it commi
 | draft `docs/HANDOFF.md` | always | model drafts, owner accepts |
 | check the handoff with a fresh reader and the six questions | full | fresh session or another model |
 | push the branch, when the lint has no error | always | script and model |
-| report, short: what was pushed, what failed or was refused, what needs the owner | always | script and model |
+| report, short: what was pushed, what failed or was refused, the vault notes created and updated (by path; the close script lists them), what needs the owner | always | script and model |
 
 The stats line records the day, commit, commits since the last row, their first and last subject, and the context size at close, from the adapter (`adapters/claude/context-report/last_context.py` under Claude Code, ADR 015); `close_slice.py` runs it.
 

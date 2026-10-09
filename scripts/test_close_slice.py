@@ -74,6 +74,27 @@ class Close(unittest.TestCase):
         count = lambda out: int(re.search(r"(\d+) warning\(s\)", out).group(1))  # noqa: E731
         self.assertEqual(count(missing), count(present) + 1)
 
+    def test_the_block_lists_the_vault_notes_created_then_updated_and_never_a_note_it_did_not_touch(self):
+        ts.put(self.vault, "Concepts/round-trip-frugality.md", CONCEPT)
+        code, first, _ = self.close()
+        self.assertEqual(code, 0, first)
+        self.assertRegex(first, r"(?m)^vault: 3 note\(s\) created, 0 updated$")
+        self.assertIn("created: Projects/demo/decisions/002 - Second decision.md", first)
+        self.assertIn("created: Projects/demo/demo - Stats.md", first)
+        ts.put(self.repo, "notes.txt", "x\n")
+        ts.commit(self.repo, "another")  # a new commit makes the stats note gain a row
+        _, second, _ = self.close()
+        self.assertRegex(second, r"(?m)^vault: 0 note\(s\) created, 1 updated$")
+        self.assertIn("updated: Projects/demo/demo - Stats.md", second)
+        self.assertNotIn("Garden.md", first + second)  # the owner's notes were not written, so they are not listed
+
+    def test_a_close_that_writes_nothing_says_so(self):
+        ts.put(self.vault, "Concepts/round-trip-frugality.md", CONCEPT)
+        self.close()
+        _, again, _ = self.close()
+        self.assertNotIn("created:", again)
+        self.assertRegex(again, r"(?m)^vault: no note changed$")
+
     def test_a_dry_run_writes_nothing(self):
         ts.put(self.vault, "Concepts/round-trip-frugality.md", CONCEPT)
         code, out, _ = self.close("--dry-run")
