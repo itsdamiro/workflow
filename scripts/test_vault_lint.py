@@ -292,6 +292,15 @@ class Frontmatter(VaultCase):
             self.write("A.md", fm(projects=None, type=kind))
             self.assertEqual([f.detail for f in self.hits("missing-field", "A.md")], ["projects"], kind)
 
+    def test_a_brand_note_passes_without_projects_with_client_and_image_embeds(self):
+        self.write("Tags.md", TAGS.replace("idea, project", "idea, brand, project"))
+        self.write("Brands/Acme/Acme.md", fm(type="brand", projects=None, status="active", client="Acme Ltd",
+                                             tags="[type/brand, status/active]") + "[[Acme - Moodboard]]\n")
+        self.write("Brands/Acme/Acme - Moodboard.md", fm(type="brand", projects=None, status="active",
+                                                          tags="[type/brand, status/active]")
+                   + "![[2026-10-15-1432-a3f9.png]]\nwarm paper texture\n[source](https://example.com)\n\n[[Acme]]\n")
+        self.assertEqual([f for f in self.lint() if f.path.startswith("Brands/")], [])
+
     def test_a_capture_passes_when_tags_md_lists_the_type(self):
         self.write("Tags.md", TAGS.replace("idea, project", "idea, capture, project"))
         self.write("Projects/alpha/Captured/Said.md", fm(type="capture", tags="[type/capture, status/draft, project/alpha, topic/mind]")

@@ -21,3 +21,4 @@ Lightweight records for anything durable. Format: `TEMPLATE.md`. Standard: `docs
 | [015](015-context-size-from-the-session-transcript.md) | The Claude adapter reads the context size from the session's own transcript, and gives a dash when it cannot | Accepted |
 | [016](016-the-workflow-reads-documents-not-code.md) | The workflow reads documents, not code | Accepted |
 | [017](017-vault-notes-by-proposal-and-approval.md) | Notes on the owner's side of the vault are proposed, shown in full and written only on the owner's approval | Accepted |
+| [018](018-brands-and-the-board-in-the-vault.md) | Brands have their own vault folder, and their images live in a gitignored `Board/` folder beside it | Accepted |

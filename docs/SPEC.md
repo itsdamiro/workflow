@@ -44,6 +44,8 @@ The central vault is `garden`, started empty on 2026-10-08. It is local with no 
 
 ```
 Projects/<name>/   <name>.md (hub, yours), decisions/, <name> - Rejected ideas.md, <name> - Gotchas.md (when committed), <name> - Stats.md (one row per `/handoff`), Captured/ (the owner's words, proposed and written on their yes, ADR 017)
+Brands/<slug>/     <slug>.md (hub, yours), <slug> - <Title>.md notes, <slug> - Moodboard.md (one block per item, appended by the board app); `client:` in the frontmatter marks client work (ADR 018)
+Board/<slug>/      image files and thumbs/ only, gitignored, no notes; the folder name equals the brand's (ADR 018)
 Concepts/          one note per idea you name (the vocabulary)
 Patterns/          reusable building blocks, each citing code and any ADR
 Ideas/             your own notes
@@ -51,7 +53,7 @@ Inbox/             outside sources, unevaluated
 Templates/
 ```
 
-Each top-level folder has a definition note named after the folder (`Projects/Projects.md`) stating its purpose and the frontmatter template for its notes (Sympose's folder-definition convention).
+Each top-level folder of notes has a definition note named after the folder (`Projects/Projects.md`) stating its purpose and the frontmatter template for its notes (Sympose's folder-definition convention). `Board/` holds no notes and has none (ADR 018).
 
 **Names.** A decision card is `NNN - Sentence from the slug.md` (`040 - The persona looks up notes itself.md`). The leading number is the key the script matches on; the sentence is built from the repo filename's slug, not the heading, so it is short and has no characters Obsidian rejects. Links are written `[[040 - The persona looks up notes itself|ADR 040]]`. If two cards would get the same name the script stops and reports.
 
@@ -63,7 +65,7 @@ Each top-level folder has a definition note named after the folder (`Projects/Pr
 
 ```yaml
 ---
-type: decision          # decision | concept | pattern | idea | source | reference | project | folder-definition | index | redirect | capture
+type: decision          # decision | concept | pattern | idea | source | reference | project | folder-definition | index | redirect | capture | brand
 status: accepted
 created: 2026-10-08
 projects: [workflow]
@@ -133,3 +135,4 @@ Language-neutral. `gates.conf` is `name | directory | command`. SOPs avoid assum
 - Does Sympose parse the chosen tag and list syntax? Test with sample notes before fixing the format.
 - Does the mod draw on the desktop app, and can it read tokens as well as a percent of the window?
 - Do structural tags add noise to Sympose's connections?
+- Sympose does not render image embeds yet (its `resolve-embed.tsx`: "asset serving isn't implemented on the backend"), so a Moodboard's `![[…png]]` shows as literal text there, as does raw inline HTML such as `<svg>` (Stylo's preview does not enable raw HTML). Obsidian and the board app draw them. Showing images in Sympose is a feature for Sympose's own repository (ADR 018, amendment of 2026-10-15).
