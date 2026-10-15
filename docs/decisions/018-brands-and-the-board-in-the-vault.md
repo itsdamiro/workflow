@@ -75,4 +75,4 @@ Decision 6 listed only appending under a Moodboard. The board app (its own repos
 
 Consequences: an item removed this way is gone from the note and from `Board/`; the vault's git history still holds the note's earlier text, but `Board/` has no history, so a removed image is not recoverable unless the owner has a backup of it (the open question in "Left open"). A removed block can also leave a Moodboard one blank line shorter, which is harmless.
 
-**Decided by the owner** in chat on 2026-10-15 (delete) and requested as this amendment on 2026-10-16; the owner has still to read and accept the text above.
+**Decided by the owner** in chat on 2026-10-15 (delete) and requested as this amendment on 2026-10-16; accepted by the owner on 2026-10-16.
