@@ -76,3 +76,17 @@ Decision 6 listed only appending under a Moodboard. The board app (its own repos
 Consequences: an item removed this way is gone from the note and from `Board/`; the vault's git history still holds the note's earlier text, but `Board/` has no history, so a removed image is not recoverable unless the owner has a backup of it (the open question in "Left open"). A removed block can also leave a Moodboard one blank line shorter, which is harmless.
 
 **Decided by the owner** in chat on 2026-10-15 (delete) and requested as this amendment on 2026-10-16; accepted by the owner on 2026-10-16.
+
+## Amendment (2026-10-16): `Board/<slug>/links/` holds what the app looked up for an address
+
+Decision 3 said `Board/` holds only image files. The board app (its own repository, ADR 008 there) now looks up the title and preview picture of an address the owner adds with no picture, and keeps the result beside the images. What changes:
+
+1. **A new folder.** `Board/<slug>/links/` holds, for each address looked up, `<hash>.json` with `{title, preview, fetched}` and, if the page named a preview image, its thumbnail `<hash>.<ext>`. `<hash>` is the first 16 hex characters of the SHA-256 of the exact address. Only the thumbnail is kept, never the original image.
+2. **`Board/` is still not notes.** The folder holds image files and these small JSON files, still gitignored, still invisible to Sympose and the lint (they read only `*.md`). Anything else that reads `Board/` must tolerate `links/` and its `.json` files.
+3. **Nothing changes in a note.** The lookup writes no text into a Moodboard note: decisions 5 and 6 stand. A page's title is another person's text, so it is shown by the app and never written as the owner's description.
+4. **Delete.** Deleting an item also removes its `links/<hash>.*` files when no other block in that Moodboard has the same address (the amendment of 2026-10-16 on removing a block otherwise stands).
+5. **The app now contacts other sites.** Only at the moment of adding an address with no picture, with the owner able to switch the lookup off per item. How it limits that is recorded in the app's repository, not here.
+
+Consequences: `Board/` has no history, so a lookup result is lost with it, as the images are; a title and picture are a snapshot and are never refreshed.
+
+**Approved by the owner** in chat on 2026-10-16.
