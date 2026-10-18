@@ -16,7 +16,7 @@ For any assistant. A long session re-reads its whole conversation on every messa
 
 ## Starting
 
-1. Open a new session in the project folder.
+1. Open a new session in the project folder. This is the moment to change model or effort: a prompt cache is commonly kept per model, so a model change mid-session makes the next message re-read the whole conversation uncached, while a fresh session has only the handoff to read. Some assistants keep the cache across an effort change, but a model change belongs at a slice boundary.
 2. Read the project's contents page, then `docs/HANDOFF.md`. Read nothing else until the task needs it.
 3. Say back, in a few lines: the next action, what it is done when, what you must not do, and what waits on the owner. If any of those cannot be answered from the handoff, that is a defect in the handoff: tell the owner, and fix it after the task.
 4. Run `scripts/gates` and `git status -sb` to see the real state before trusting the handoff's account of it.

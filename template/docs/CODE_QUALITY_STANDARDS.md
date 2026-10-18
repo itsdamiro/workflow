@@ -83,6 +83,7 @@ Subagents are allowed on any project, for development work. They are a tool for 
 Rules:
 
 - **Brief it like a colleague who has seen nothing**: the goal, the files, the constraints, what "done" looks like, and the shape of the report. It does not see the conversation.
+- **Fork when the side task needs the conversation.** Where the assistant can fork the conversation (a copy that knows everything so far and reuses its cache), a fork fits a side task that depends on decisions made only in the conversation, which a fresh subagent cannot see. A fresh subagent still fits a review or a check of a claim, because a fork inherits the author's assumptions.
 - **Read-only unless the task is to edit, and then it owns its files.** Two writers on one file lose work. For parallel edits use separate worktrees. A mutation run owns the file it mutates, so never two at once on one file.
 - **It does not commit, push, or change shared state** (settings, data folders, a port in use). The owner's go-ahead rule and the git-safety hook apply to it as to you. Scratch servers get their own port, and it stops only its own.
 - **Its report is a claim, not evidence.** Verify what matters (§7) before relying on it or repeating it as fact; they overclaim and miss things like anyone.

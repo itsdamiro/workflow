@@ -47,3 +47,12 @@ python3 adapters/claude/context-report/context_report.py ~/.claude/projects/<pro
 Prints session length, context size and what a cap of 150k, 200k and 300k would save (`--caps`, `--restart-extra`). Aggregates only. Claude Code transcripts only, main thread only. It does not reproduce ADR 001's split of reads by kind; count image reads by number when you add that.
 
 `adapters/claude/context-report/last_context.py` (ADR 015) prints one number, the context of the current session's last answer, from `$CLAUDE_CODE_SESSION_ID`; it exits 1 and prints nothing when it cannot name that transcript, and the stats row then shows a dash.
+
+### Give Claude Code's `/goal` a goal its checker can see
+```
+/goal scripts/gates exits 0 and you show its output; stop after 15 turns
+```
+The checker reads only the conversation: it runs nothing and opens no files, so a goal is met only when its proof appears there. Name the command and ask for its output, and give a turn limit. Checked against code.claude.com/docs/en/goal on 2026-10-18.
+
+### Fork the conversation in Claude Code
+`/subtask` forks the conversation: a copy that knows everything so far and reuses the parent's prompt cache, for a side task that needs the conversation (`CODE_QUALITY_STANDARDS.md` §13). Before v2.1.212 the command was `/fork`. The name lives only here, never in a procedure, because it has already changed once. Checked against code.claude.com/docs/en/sub-agents on 2026-10-18.
