@@ -35,6 +35,7 @@ NEEDS_PROJECTS = {"decision", "idea", "pattern", "source", "capture"}
 NEEDS_TOPIC = {"decision", "concept", "pattern", "idea", "source"}
 MAX_LISTED = 5
 INBOX_DAYS = 14
+IMAGE_FOLDER = "Board"  # the vault root's image folder (ADR 018): it holds no notes, so it is not read (ADR 010, amendment of 2026-10-18)
 
 
 class Finding(NamedTuple):
@@ -214,7 +215,7 @@ def read_tags(text: str) -> Tags:
 def read_vault(root: str) -> list[Note]:
     notes = []
     for folder, dirs, files in os.walk(root):
-        dirs[:] = sorted(d for d in dirs if not d.startswith("."))
+        dirs[:] = sorted(d for d in dirs if not d.startswith(".") and not (folder == root and d == IMAGE_FOLDER))
         for file in sorted(f for f in files if f.endswith(".md") and not f.startswith(".")):
             full = os.path.join(folder, file)
             path = os.path.relpath(full, root)

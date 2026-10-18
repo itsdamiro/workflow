@@ -108,3 +108,11 @@ The first run reports the missing concept notes and whatever the owner's hand-wr
 - **Why:** ADR 017 has the assistant write notes as `status: draft` (captures, new concept or folder notes) that wait for the owner to read and link them, as draft patterns do.
 - **Rule:** an unlinked note with `status: draft` is not reported as an orphan, whatever its `type`. A draft idea, which the first amendment did not cover, is now exempt too. The type `capture` requires `projects`. `Tags.md` in the vault must list `capture` under `type/`, or the lint reports an unknown type.
 - **Not changed:** every other check, including the orphan check for `proposed`, `accepted` and `active` notes.
+
+## Amendment (2026-10-18): the lint does not read the top-level `Board/` folder
+
+- **Why:** [ADR 018](018-brands-and-the-board-in-the-vault.md) decision 3 says `Board/` holds image files and their thumbnails, "no notes" and no definition note. On 2026-10-18, for the second time in two days, Obsidian made a folder note there (`Board/Board.md`, no frontmatter), which the lint read as a note: three `missing-field` errors and a `duplicate-name` with the project's hub, so the close script exited 1 and the handoff stopped before the push. The first stub was moved to the Trash on 2026-10-17; it came back.
+- **Rule:** the lint skips the folder named `Board` at the vault's root, as it skips hidden folders. A note inside it is not read, so it is neither checked nor counted among the names a link can resolve to. A folder named `Board` anywhere else is read as usual.
+- **Not changed:** every other check, and the sync and stats scripts, which read the vault by their own walks. `Board/` stays gitignored and holds no notes; a stub in it is the owner's to remove or to stop Obsidian making, and the lint no longer fails on it.
+- **Accepted** by the owner on 2026-10-18, in chat ("fix it please, create the files if needed"), in answer to the proposal to skip `Board/` in the lint with an amendment first.
+- **Still open, not decided here:** `vault_sync.py`'s `names_elsewhere` also walks the whole vault, so a note named like a new project card, placed in `Board/`, would count as that name in use. Nothing is wrong today; it would be one more line in the same place if it ever bites.

@@ -199,6 +199,18 @@ class Clean(VaultCase):
         self.write("notes.txt", "[[Nope]]")
         self.assertEqual(self.lint(), [])
 
+    def test_the_image_folder_at_the_root_is_not_read(self):
+        self.write("Board/Board.md", "# Board\n")  # an Obsidian folder note with no frontmatter
+        self.assertEqual(self.lint(), [])
+
+    def test_a_note_in_the_image_folder_does_not_take_a_name_from_a_real_note(self):
+        self.write("Board/Idea.md", "# Board\n")  # the same name as the vault's Idea.md
+        self.assertEqual(self.hits("duplicate-name"), [])
+
+    def test_a_folder_named_board_below_the_root_is_still_read(self):
+        self.write("Projects/alpha/Board/stub.md", "# no frontmatter\n")
+        self.assertTrue(self.hits("missing-field", "Projects/alpha/Board/stub.md"))
+
 
 class Reading(VaultCase):
     def test_a_byte_order_mark_does_not_hide_the_frontmatter(self):
