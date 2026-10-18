@@ -31,10 +31,17 @@ tags: [type/decision, status/accepted, project/workflow, topic/architecture]
 
 - Easier: a failing gate shows on every push without anyone running it, for any assistant or none, and costs no tokens.
 - Harder: each project's gates must run on a clean Linux checkout; one that needs a local path or a machine-only tool fails in CI until it is fixed or marked.
-- Open: the workflow was written and not yet run on GitHub; the first push will show whether this repository's gates pass there. A later record decides what an unattended run may commit.
+- Open: a later record decides what an unattended run may commit. The first run on GitHub (2026-10-18) passed all 18 of this repository's gates.
 
 ## Alternatives rejected
 
 - **A cloud routine that runs the gates on a pull request.** It does the same job through a preview feature, with a model in the loop, and without the rules and handoff. It becomes right if a job needs a model and nobody at the keyboard: a review of every pull request, or a recurring chore. That record also has to say what an unattended run may commit.
 - **Committing `CLAUDE.md` and `.claude/` so the cloud sees them.** It breaks the no-trace rule (`docs/COLLABORATION_STANDARDS.md`). It becomes right only if the owner changes that rule.
 - **A cloud setup script that writes the rules into the machine.** Possible, and it keeps the repository clean, but it lives outside the repository and nobody reviews it. Right if cloud runs become routine.
+
+## Amendment (2026-10-18): the runner is pinned and checkout moves to v7
+
+- **Why:** the first run (passed, all 18 gates) carried two annotations. `actions/checkout@v4` runs on Node 20, which GitHub is forcing onto Node 24; and `ubuntu-latest` moves to Ubuntu 26 on 2026-10-19, which would change the OS, Python and bash under the gates without a change in the repository. The owner agreed to the pin on 2026-10-18 ("ok commit and push", after the recommendation).
+- **Done:** `template/ci/gates.yml` uses `actions/checkout@v7` (Node 24) and `runs-on: ubuntu-24.04`; the template is version 19.
+- **Cost:** the runner label is bumped by hand when Ubuntu 24.04 nears its end. Projects that already adopted version 18 keep their own copy and see the difference in `adopt.sh --check`.
+- **Alternative rejected:** staying on `ubuntu-latest`. It becomes right if a surprise red run from a migration costs less than keeping a pin current.
