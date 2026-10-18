@@ -1,0 +1,18 @@
+# Runs every gate of the project (scripts/gates, listed in scripts/gates.conf) on each push and pull request. ADR 019.
+# No assistant is involved. A project whose gates need more than a stock Ubuntu runner (a Node or Python version, a
+# package install) adds the setup step below its checkout in its own copy; adopt.sh never overwrites this file.
+name: gates
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: scripts/gates

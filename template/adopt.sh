@@ -32,6 +32,7 @@ pairs=(
   "scripts/mutate.py|scripts/mutate.py"
   "scripts/md_wrap_check.py|scripts/md_wrap_check.py"
   "scripts/adr_check.py|scripts/adr_check.py"
+  "ci/gates.yml|.github/workflows/gates.yml"
 )
 [ "$gemini" = 1 ] && pairs+=("GEMINI.template.md|GEMINI.md")
 

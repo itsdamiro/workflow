@@ -21,6 +21,8 @@ for f in docs/VAULT_CONVENTIONS.md docs/decisions/TEMPLATE.md docs/sop/write-an-
   [ -s "$proj/$f" ]; ok $? "$f is installed"
 done
 grep -q VAULT_CONVENTIONS "$proj/CLAUDE.md"; ok $? "the contents page points at the conventions"
+grep -q 'scripts/gates' "$proj/.github/workflows/gates.yml"; ok $? "the CI workflow is installed and runs the gates"
+grep -q 'contents: read' "$proj/.github/workflows/gates.yml"; ok $? "the CI workflow asks for read access only"
 [ "$(cat "$proj/docs/.template-version")" = "$(cat "$here/VERSION")" ]; ok $? "the version is recorded"
 
 echo 'edited' >> "$proj/CLAUDE.md"; printf '#!/bin/sh\necho mine\n' > "$proj/.git/hooks/commit-msg"
@@ -39,6 +41,12 @@ grep -q adr-check "$proj/scripts/gates.conf"; [ $? != 0 ]; ok $? "the gate list 
 rm "$proj/.git/hooks/commit-msg"
 "$here/adopt.sh" "$proj" --check 2>&1 | grep -q 'missing  git hook commit-msg'; ok $? "--check reports a missing hook"
 [ ! -e "$proj/.git/hooks/commit-msg" ]; ok $? "--check changes nothing"
+echo '# mine' >> "$proj/.github/workflows/gates.yml"
+"$here/adopt.sh" "$proj" 2>&1 | grep -q 'differs  .github/workflows/gates.yml'; ok $? "an edited CI workflow is reported"
+grep -q '# mine' "$proj/.github/workflows/gates.yml"; ok $? "an edited CI workflow is never overwritten"
+rm "$proj/.github/workflows/gates.yml"
+"$here/adopt.sh" "$proj" --check 2>&1 | grep -q 'missing  .github/workflows/gates.yml'; ok $? "--check reports a missing CI workflow"
+[ ! -e "$proj/.github/workflows/gates.yml" ]; ok $? "--check does not restore the CI workflow"
 rm "$proj/docs/sop/rename-a-concept.md"
 "$here/adopt.sh" "$proj" --check 2>&1 | grep -q 'missing  docs/sop/rename-a-concept.md'; ok $? "--check reports a missing procedure"
 [ ! -e "$proj/docs/sop/rename-a-concept.md" ]; ok $? "--check does not restore it"

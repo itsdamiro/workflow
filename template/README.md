@@ -9,7 +9,7 @@ Version: see `VERSION` (copied into each project as `docs/.template-version`).
 | Layer | Lives in | Holds |
 |---|---|---|
 | Machine-wide, once | `~/.claude` (linked from here by `install.sh`), `~/.gemini/commands` (written by it) | the git-safety hook, the skills, the Gemini `/handoff` command |
-| Template, per project | copied by `adopt.sh` | `CLAUDE.md` (a contents page), the standards, the handoff, the closing checklist, `scripts/gates`, `scripts/mutate.py`, `scripts/md_wrap_check.py`, `scripts/adr_check.py`, the record template and the vault conventions |
+| Template, per project | copied by `adopt.sh` | `CLAUDE.md` (a contents page), the standards, the handoff, the closing checklist, `scripts/gates`, `scripts/mutate.py`, `scripts/md_wrap_check.py`, `scripts/adr_check.py`, `.github/workflows/gates.yml` (the gates in CI, ADR 019), the record template and the vault conventions |
 | Project facts | the project itself | its gate commands, its rules, its decisions, its handoff |
 
 ## What is in here
@@ -34,6 +34,7 @@ coding-standards/
 │   ├── sop/check-a-handoff.md       test a handoff with a fresh reader (a copy of docs/sop/check-a-handoff.md)
 │   ├── reference/GOTCHAS.template.md  → docs/reference/GOTCHAS.md: traps and recipes (the durable half)
 │   └── reference/CODE_REVIEW_STANDARDS.md  tooling, review tiers, triage, type safety: read only when the task changes or reviews code
+├── ci/gates.yml               → <project>/.github/workflows/gates.yml: runs scripts/gates on every push and pull request (ADR 019)
 ├── scripts/
 │   ├── gates (+ gates.conf.template)  every gate, one line each, failures show their last lines
 │   ├── mutate.py                      mutation check for new tests; restores from a copy, never git
