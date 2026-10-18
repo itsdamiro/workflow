@@ -22,3 +22,4 @@ Lightweight records for anything durable. Format: `TEMPLATE.md`. Standard: `docs
 | [016](016-the-workflow-reads-documents-not-code.md) | The workflow reads documents, not code | Accepted |
 | [017](017-vault-notes-by-proposal-and-approval.md) | Notes on the owner's side of the vault are proposed, shown in full and written only on the owner's approval | Accepted |
 | [018](018-brands-and-the-board-in-the-vault.md) | Brands have their own vault folder, and their images live in a gitignored `Board/` folder beside it | Accepted |
+| [019](019-gates-in-ci-cloud-and-routines-deferred.md) | Gates run in CI for every project; cloud sessions and routines wait for a job that needs them | Accepted |
