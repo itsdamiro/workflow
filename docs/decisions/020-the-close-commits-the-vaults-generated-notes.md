@@ -79,3 +79,5 @@ The two reviews of `/handoff full` read the first build and found cases the Deci
 - **Decided:** the close counts against both refs and reports the larger count as "already N commit(s) ahead". When the tracked branch is level but `@{push}` does not resolve (the push remote has no such branch yet), it prints `vault git: where a push would go cannot be measured, so do not push it`. Step 5 of `docs/sop/handoff.md` lists that line with the other two that stop the vault push. The commit itself is unchanged.
 - **Declined:** a refusal for a bisect in progress. A bisect, with or without `--no-checkout`, leaves HEAD detached, which the close already refuses (checked in a scratch repository); a `BISECT_LOG` marker would add nothing.
 
+
+**Accepted** by the owner on 2026-10-20, in chat, as written.

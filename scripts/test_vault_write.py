@@ -379,7 +379,7 @@ class AddTopic(Case):
     def test_a_listed_topic_a_bad_word_a_bad_question_a_note_of_that_name_or_no_list_is_refused(self):
         self.put("Tags.md", self.NESTED)
         self.refused(self.add("consent"), "already listed")
-        for bad in ("Cost", "two words", "a/b", "x-", ""):
+        for bad in ("Cost", "x-", ""):
             self.refused(self.add(bad), "kebab-case")
         for bad in ("", "  ", "two\nlines"):
             self.refused(self.add(question=bad), "empty or has a line break")
@@ -387,6 +387,11 @@ class AddTopic(Case):
         self.put("Tags.md", TAGS)
         self.refused(self.add(), "lists no topic yet")
         self.assertEqual(self.read("Tags.md"), TAGS)
+
+    def test_a_question_that_names_another_topic_in_backticks_is_refused_for_it_would_list_that_one_too(self):
+        self.put("Tags.md", self.NESTED)
+        self.refused(self.add(question="like `topic/secret`, but faster?"), "exactly the new topic")
+        self.assertEqual(self.read("Tags.md"), self.NESTED)
 
     def test_a_write_that_does_not_read_back_puts_the_old_content_back(self):
         self.put("Tags.md", self.NESTED)

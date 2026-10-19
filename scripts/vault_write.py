@@ -237,14 +237,14 @@ TOPIC_LINE = re.compile(r"^([ \t]*)[-*][ \t]+`topic/[a-z0-9]+(?:-[a-z0-9]+)*`[ \
 def add_topic(root: str, a) -> str:
     """List one topic in Tags.md: a new bullet, indented like the last listed topic, placed right after it."""
     tags, names = vault_facts(root)
-    if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", a.topic):
+    if not vl.TAG.match(f"topic/{a.topic}"):
         raise Refused(f"{a.topic!r} is not a lowercase kebab-case word")
     if a.topic in tags.topics:
         raise Refused(f"topic/{a.topic} is already listed")
     if vl.fold(a.topic.replace("-", " ")) in names:
         raise Refused(f"a note is named {a.topic.replace('-', ' ')!r}: a topic is never a concept's own name, so use that note")
     question = a.question.strip()
-    if not question or any(c in question for c in "\r\n\x00"):
+    if not question or any(c in question for c in "\r\n"):
         raise Refused("the question is empty or has a line break")
     full = os.path.join(root, "Tags.md")
     with open(full, encoding="utf-8", newline="") as f:
@@ -260,8 +260,8 @@ def add_topic(root: str, a) -> str:
     eol = "\r\n" if "\r\n" in old else "\n"
     gap = eol if not lines[at - 1].endswith(("\n", "\r")) else ""
     expected = "".join(lines[:at]) + gap + f"{indent}- `topic/{a.topic}`: {question}" + eol + "".join(lines[at:])
-    if a.topic not in vl.read_tags(expected).topics:
-        raise Refused("the new line would not be read as a listed topic")
+    if vl.read_tags(expected).topics != tags.topics | {a.topic}:
+        raise Refused("the new line would list exactly the new topic and no other (a backtick in the question can name one)")
     write_checked(full, old, expected)
     return "Tags.md"
 
