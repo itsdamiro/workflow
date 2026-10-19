@@ -1,12 +1,12 @@
 ---
 type: decision
-status: proposed
+status: accepted
 date: 2026-10-19
 projects: [workflow]
 concepts: [Handoff, Vault upkeep]
 amends: [005]
 supersedes: []
-tags: [type/decision, status/proposed, project/workflow, topic/vault, topic/consent, topic/privacy]
+tags: [type/decision, status/accepted, project/workflow, topic/vault, topic/consent, topic/privacy]
 ---
 
 # 020 — The close commits the vault's generated notes by path, and pushes the vault beside the project
@@ -53,3 +53,12 @@ tags: [type/decision, status/proposed, project/workflow, topic/vault, topic/cons
 - **A separate command (`/vault-commit`).** Clean separation, but ADR 005 rejected separate commands for parts of one moment, and a step the owner must remember is a step that is skipped. Right if vault commits should follow the owner's schedule rather than the closes, or several projects close at once routinely.
 - **Push from inside the close script.** One command does all, but a `git push` inside Python is invisible to the git-safety hook, removing the pause ADR 005 kept on purpose. Right if the owner allows vault pushes outright.
 - **An Obsidian git plugin committing on a timer.** No workflow code, but it commits whatever is there, ignores and trash included, outside any procedure. Right if the owner wants a whole-vault backup and accepts that it is unreviewed.
+
+## Accepted (2026-10-19)
+
+**Decided by the owner** in chat on 2026-10-19, answering the four questions under "Open for the owner" one by one, each with the recommended option:
+
+1. **Scope:** generated notes only.
+2. **Push:** beside the project's, as the assistant's visible `git push`.
+3. **Backlog:** the first close sweeps the waiting generated notes into one commit.
+4. **`.gitignore`:** accepted as it is. The owner will restore `Board/` and decide on `.trash/` themselves; the close never touches `.gitignore`, `Board/` or `.trash/`, so this does not hold up the build.

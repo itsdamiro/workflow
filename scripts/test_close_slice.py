@@ -4,6 +4,7 @@ import contextlib
 import io
 import os
 import re
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -17,6 +18,9 @@ TAGS = tl.TAGS.replace("folder-definition", "folder-definition, reference, index
 FRONT = "---\ntype: {}\nstatus: {}\ncreated: 2026-10-08\ntags: [type/{}, status/{}, topic/mind]\n---\n"
 GARDEN = FRONT.format("project", "active", "project", "active") + "[[Tags]] [[demo]]\n"
 HUB = FRONT.format("project", "active", "project", "active") + "Back to [[Garden]]. [[demo - Rejected ideas]]\n"
+GENERATED = "---\ntype: decision\nstatus: accepted\ncreated: 2026-10-08\nprojects: [demo]\ngenerated: true\ntags: [type/decision, status/accepted, project/demo, topic/mind]\n---\nBack to [[Garden]].\n{}"
+DRAFT = ("---\ntype: pattern\nstatus: draft\ncreated: 2026-10-08\nprojects: [demo]\n"
+         "tags: [type/pattern, status/draft, project/demo, topic/mind]\n---\nBack to [[Garden]].\n")
 CONCEPT = FRONT.format("concept", "accepted", "concept", "accepted") + "Back to [[Garden]]. [[002 - Second decision]]\n"
 
 
@@ -128,6 +132,135 @@ class Close(unittest.TestCase):
             code = c.main([empty, self.vault])
         self.assertEqual(code, 2)
         self.assertIn("close_slice: the sync failed", err.getvalue())
+
+    def vault_repo(self, remote=False):
+        """Make the vault a git repository of its own with its concept note committed; with a remote, level with it."""
+        ts.put(self.vault, "Concepts/round-trip-frugality.md", CONCEPT)
+        ts.git(self.tmp.name, "init", "-q", "-b", "main", self.vault)
+        ts.git(self.vault, "config", "user.name", "vault-owner")
+        ts.git(self.vault, "config", "user.email", "vault@example.com")
+        ts.put(self.vault, "Projects/demo/Old.md", GENERATED.format("old\n"))
+        ts.put(self.vault, "Projects/demo/[x] a*.md", GENERATED.format("one\n"))
+        ts.put(self.vault, "Projects/demo/x a1.md", FRONT.format("project", "active", "project", "active") + "Back to [[Garden]].\n")
+        ts.put(self.vault, "Projects/demo/Moved.md", GENERATED.format("moved\n"))
+        ts.commit(self.vault, "the owner's vault")
+        if remote:
+            bare = os.path.join(self.tmp.name, "remote.git")
+            ts.git(self.tmp.name, "init", "-q", "--bare", bare)
+            ts.git(self.vault, "remote", "add", "origin", bare)
+            ts.git(self.vault, "push", "-q", "-u", "origin", "main")
+
+    def committed(self, rev="HEAD"):
+        return set(ts.git(self.vault, "show", "--name-only", "--format=", rev).splitlines())
+
+    def test_the_close_commits_the_changed_generated_notes_by_path_and_leaves_everything_else(self):
+        self.vault_repo()
+        os.remove(os.path.join(self.vault, "Projects/demo/Old.md"))  # a deletion is the owner's act
+        ts.put(self.vault, "Projects/demo/[x] a*.md", GENERATED.format("two\n"))  # a generated note whose name holds glob characters
+        ts.put(self.vault, "Projects/demo/x a1.md", FRONT.format("project", "active", "project", "active") + "Back to [[Garden]]. Edited.\n")
+        ts.put(self.vault, "Garden.md", GARDEN + "A line the owner staged.\n")
+        ts.git(self.vault, "add", "Garden.md")
+        ts.put(self.vault, "Patterns/Draft.md", DRAFT)  # a model draft
+        ts.put(self.vault, ".trash/Old.md", GENERATED.format("trash\n"))  # generated, but in a hidden folder
+        ts.put(self.vault, "Board/demo/pic.png", "x")
+        ts.put(self.vault, "notes.txt", GENERATED.format("not Markdown\n"))  # generated, but not a Markdown file
+        ts.git(self.vault, "mv", "Projects/demo/Moved.md", "Projects/demo/Moved2.md")  # a rename the owner staged
+        code, out, _ = self.close()
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.committed(), {"Projects/demo/[x] a*.md", "Projects/demo/demo - Rejected ideas.md", "Projects/demo/demo - Stats.md",
+                                            "Projects/demo/decisions/002 - Second decision.md"})
+        self.assertRegex(out, r"(?m)^vault git: committed 4 note\(s\) as [0-9a-f]+$")
+        status = ts.git(self.vault, "status", "--porcelain", "--untracked-files=all").splitlines()
+        self.assertEqual(sorted(status), sorted([" D Projects/demo/Old.md", ' M "Projects/demo/x a1.md"', "M  Garden.md", "R  Projects/demo/Moved.md -> Projects/demo/Moved2.md", "?? Patterns/Draft.md", "?? notes.txt",
+                                                 "?? Board/demo/pic.png", "?? .trash/Old.md"]))
+
+    def test_the_commit_message_names_the_project_and_the_count_with_no_trailer_and_the_vaults_own_identity(self):
+        self.vault_repo()
+        self.close()
+        short = ts.git(self.repo, "rev-parse", "--short", "HEAD").strip()
+        self.assertEqual(ts.git(self.vault, "log", "-1", "--format=%B").strip(), f"Close demo at {short}: 3 generated note(s)")
+        self.assertEqual(ts.git(self.vault, "log", "-1", "--format=%an <%ae>").strip(), "vault-owner <vault@example.com>")
+
+    def test_a_second_close_with_nothing_new_commits_nothing(self):
+        self.vault_repo()
+        self.close()
+        before = ts.git(self.vault, "rev-parse", "HEAD")
+        _, again, _ = self.close()
+        self.assertIn("vault git: nothing to commit", again)
+        self.assertEqual(ts.git(self.vault, "rev-parse", "HEAD"), before)
+
+    def test_a_vault_that_is_not_its_own_repository_is_left_alone(self):
+        ts.put(self.vault, "Concepts/round-trip-frugality.md", CONCEPT)
+        _, plain, _ = self.close()
+        self.assertIn("vault git: not committed (the vault is not a git repository of its own)", plain)
+        ts.git(self.tmp.name, "init", "-q", "-b", "main", self.tmp.name)  # now the vault sits inside another repository
+        _, nested, _ = self.close()
+        self.assertIn("vault git: not committed (the vault is not a git repository of its own)", nested)
+        self.assertEqual(subprocess.run(["git", "-C", self.tmp.name, "rev-parse", "HEAD"], capture_output=True).returncode, 128)  # no commit was made
+
+    def test_a_merge_a_rebase_or_a_held_lock_stops_the_commit(self):
+        self.vault_repo()
+        for marker, what in (("MERGE_HEAD", "a merge"), ("rebase-merge", "a rebase"), ("index.lock", "another git command")):
+            with self.subTest(marker):
+                path = os.path.join(self.vault, ".git", marker)
+                if marker == "rebase-merge":
+                    os.makedirs(path)
+                else:
+                    ts.put(self.vault, os.path.join(".git", marker), "x\n")
+                before = ts.git(self.vault, "rev-parse", "HEAD")
+                _, out, _ = self.close()
+                self.assertIn(f"vault git: not committed ({what}", out)
+                self.assertEqual(ts.git(self.vault, "rev-parse", "HEAD"), before)
+                (os.rmdir if marker == "rebase-merge" else os.remove)(path)
+
+    def test_unmerged_paths_stop_the_commit(self):
+        self.vault_repo()
+        note = "Projects/demo/[x] a*.md"
+        ts.put(self.vault, note, GENERATED.format("stashed\n"))
+        ts.git(self.vault, "stash", "-q")
+        ts.put(self.vault, note, GENERATED.format("committed\n"))
+        ts.commit(self.vault, "a different change")
+        subprocess.run(["git", "-C", self.vault, "stash", "pop", "-q"], capture_output=True)  # conflicts, leaving the note unmerged without a MERGE_HEAD
+        self.assertFalse(os.path.exists(os.path.join(self.vault, ".git", "MERGE_HEAD")))
+        before = ts.git(self.vault, "rev-parse", "HEAD")
+        _, out, _ = self.close()
+        self.assertIn("vault git: not committed (the vault has unmerged paths)", out)
+        self.assertEqual(ts.git(self.vault, "rev-parse", "HEAD"), before)
+
+    def test_a_lint_error_commits_nothing(self):
+        self.vault_repo()
+        os.remove(os.path.join(self.vault, "Concepts/round-trip-frugality.md"))  # the record's concept now has no note: a lint error
+        before = ts.git(self.vault, "rev-parse", "HEAD")
+        code, out, _ = self.close()
+        self.assertEqual(code, 1)
+        self.assertIn("vault git: not committed (the lint has an error)", out)
+        self.assertEqual(ts.git(self.vault, "rev-parse", "HEAD"), before)
+
+    def test_a_dry_run_commits_nothing(self):
+        self.vault_repo()
+        before = ts.git(self.vault, "rev-parse", "HEAD")
+        _, out, _ = self.close("--dry-run")
+        self.assertIn("vault git: not committed (dry run)", out)
+        self.assertEqual(ts.git(self.vault, "rev-parse", "HEAD"), before)
+
+    def test_a_vault_ahead_of_its_remote_is_committed_to_but_reported_as_not_to_be_pushed(self):
+        self.vault_repo(remote=True)
+        _, level, _ = self.close()
+        self.assertNotIn("ahead", level)
+        ts.git(self.vault, "push", "-q")
+        ts.put(self.vault, "Inbox/Mine.md", FRONT.format("project", "active", "project", "active") + "Back to [[Garden]].\n")
+        ts.git(self.vault, "add", "Inbox/Mine.md")
+        ts.git(self.vault, "commit", "-q", "-m", "the owner's own commit")
+        ts.put(self.repo, "notes.txt", "x\n")
+        ts.commit(self.repo, "another")  # the stats note gains a row
+        _, ahead, _ = self.close()
+        self.assertIn("vault git: the vault was already 1 commit(s) ahead of its remote, so do not push it", ahead)
+        self.assertRegex(ahead, r"(?m)^vault git: committed 1 note\(s\) as ")
+
+    def test_a_vault_with_no_upstream_is_reported(self):
+        self.vault_repo()
+        _, out, _ = self.close()
+        self.assertIn("vault git: the vault has no upstream branch or no commit", out)
 
 
 if __name__ == "__main__":

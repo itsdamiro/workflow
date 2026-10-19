@@ -16,4 +16,4 @@ You need the vault path: take it from the user's message, else from the terms at
 
 If the procedure cannot be found, say so and stop; do not improvise a different one.
 
-Running this skill is the owner's go-ahead to commit the slice's named files and push (ADR 005 amendment); outside it, commit and push only when the owner says so.
+Running this skill is the owner's go-ahead to commit the slice's named files and push, and to commit and push the vault's generated notes (ADR 005 amendment, ADR 020); outside it, commit and push only when the owner says so.

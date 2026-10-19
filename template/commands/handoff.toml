@@ -11,7 +11,7 @@ Plain `/handoff` is the light close and never runs the checks. The argument `ful
 
 The vault path comes from the arguments, else from the terms at the top of the project's `docs/HANDOFF.md`, else ask. Do not guess one.
 
-Running this command is the owner's go-ahead to commit the slice's named files and push (ADR 005 amendment). Outside it, commit and push only when the owner says so.
+Running this command is the owner's go-ahead to commit the slice's named files and push, and to commit and push the vault's generated notes (ADR 005 amendment, ADR 020). Outside it, commit and push only when the owner says so.
 
 !{cat "__WORKFLOW__/docs/sop/handoff.md"}
 
