@@ -45,6 +45,11 @@
 - **Cause:** the status line is two flag characters, a space and the path, and an unstaged change starts with a space (` M name`). A helper that strips the whole output removes that space from the first entry only, so every later entry parses and the first does not.
 - **Do this:** strip the right end only (`rstrip`) or not at all. `scripts/close_slice.py` reads the status through `git()` for this reason, and a test pins a first entry that is modified and unstaged.
 
+### A child session started with a stronger model runs on the parent's
+- **Symptom:** a session started with `start_session` and a model above the parent's (Opus asked for from a Sonnet parent) answers as the parent's model.
+- **Cause:** `start_session` ignores a model above the parent's.
+- **Do this:** clear the child session, set the model with `set_session_model` (and the effort), confirm it with `get_session`, then send the brief. Measured once, on one ADR-sized task at medium effort: both models wrote about 1,800 words, the 5-hour meter moved about 3 points (Sonnet) and 4 (Opus), child context 100k and 118k tokens; Opus caught more cases (an edit to a note the owner may have hand-edited, a `git push` inside a script bypassing the git-safety hook). One pair proves little.
+
 ### Re-run the context measurement (ADR 001)
 ```
 python3 adapters/claude/context-report/context_report.py ~/.claude/projects/<project-folder>
