@@ -72,3 +72,10 @@ The two reviews of `/handoff full` read the first build and found cases the Deci
 - **A refused commit** (a hook, no identity) unstages the notes it had added, so they do not look like the owner's staged changes.
 - **A git that cannot run** is reported on the `vault git:` line and does not change the exit code.
 - **Declined:** the six-marker list (cherry-pick and revert were dropped: git refuses the commit itself and the failure line says so); the "no upstream" line stays, since it saves a doomed push prompt.
+
+## Amendment (2026-10-19): the ahead check measures where a push goes
+
+- **Why:** a second review, by a different model, read the first build and found that the check counted commits ahead of `@{upstream}`, the tracked branch, while `git push` goes to `@{push}`. With `branch.<name>.pushRemote` (or `remote.pushDefault`) naming another remote and `push.default=current`, a vault level with the tracked remote could still hold the owner's commits that the push remote lacks, and the close said nothing. Reproduced in a scratch repository before the fix.
+- **Decided:** the close counts against both refs and reports the larger count as "already N commit(s) ahead". When the tracked branch is level but `@{push}` does not resolve (the push remote has no such branch yet), it prints `vault git: where a push would go cannot be measured, so do not push it`. Step 5 of `docs/sop/handoff.md` lists that line with the other two that stop the vault push. The commit itself is unchanged.
+- **Declined:** a refusal for a bisect in progress. A bisect, with or without `--no-checkout`, leaves HEAD detached, which the close already refuses (checked in a scratch repository); a `BISECT_LOG` marker would add nothing.
+

@@ -332,6 +332,37 @@ class Close(unittest.TestCase):
         self.assertIn("vault git: the vault was already 1 commit(s) ahead of its remote, so do not push it", ahead)
         self.assertRegex(ahead, r"(?m)^vault git: committed 1 note\(s\) as ")
 
+    def other_remote(self):
+        """Give the vault a second remote that it pushes to (`pushRemote`), apart from the one it tracks."""
+        bare = os.path.join(self.tmp.name, "other.git")
+        ts.git(self.tmp.name, "init", "-q", "--bare", bare)
+        ts.git(self.vault, "remote", "add", "other", bare)
+        ts.git(self.vault, "config", "branch.main.pushRemote", "other")
+        ts.git(self.vault, "config", "push.default", "current")
+
+    def test_a_commit_not_yet_on_the_push_remote_counts_as_ahead_though_level_with_the_tracked_one(self):
+        self.vault_repo(remote=True)
+        self.other_remote()
+        ts.git(self.vault, "push", "-q", "other", "main")  # level with both
+        _, level, _ = self.close()
+        self.assertNotIn("ahead", level)
+        ts.git(self.vault, "push", "-q", "origin", "main")
+        ts.put(self.vault, "Inbox/Mine.md", FRONT.format("project", "active", "project", "active") + "Back to [[Garden]].\n")
+        ts.git(self.vault, "add", "Inbox/Mine.md")
+        ts.git(self.vault, "commit", "-q", "-m", "the owner's own commit")
+        ts.git(self.vault, "push", "-q", "origin", "main")  # the tracked remote has it; the push remote does not
+        ts.put(self.repo, "notes.txt", "x\n")
+        ts.commit(self.repo, "another")
+        _, out, _ = self.close()
+        self.assertIn("vault git: the vault was already 2 commit(s) ahead of its remote, so do not push it", out)  # the owner's, and the first close's
+
+    def test_a_push_destination_that_cannot_be_measured_says_not_to_push(self):
+        self.vault_repo(remote=True)
+        self.other_remote()  # the push remote has no such branch, so git cannot resolve where a push would go
+        _, out, _ = self.close()
+        self.assertIn("vault git: where a push would go cannot be measured, so do not push it", out)
+        self.assertRegex(out, r"(?m)^vault git: committed \d+ note\(s\) as ")
+
     def test_a_vault_with_no_upstream_is_reported(self):
         self.vault_repo()
         _, out, _ = self.close()

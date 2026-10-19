@@ -106,11 +106,14 @@ def commit_vault(vault: str, name: str, project: str) -> list[str]:
     if not notes:
         return ["vault git: nothing to commit"]
     lines = []
-    code, ahead = git(vault, "rev-list", "--count", "@{upstream}..HEAD")
-    if code == 0 and ahead != "0":
+    counted = [git(vault, "rev-list", "--count", f"{ref}..HEAD") for ref in ("@{upstream}", "@{push}")]  # a push may go elsewhere than the tracked branch
+    ahead = max((int(out) for code, out in counted if code == 0), default=None)
+    if ahead:
         lines.append(f"vault git: the vault was already {ahead} commit(s) ahead of its remote, so do not push it (ADR 020)")
-    elif code:
+    elif ahead is None:
         lines.append("vault git: the vault has no upstream branch or no commit, so there is nothing to push it to")
+    elif counted[1][0]:
+        lines.append("vault git: where a push would go cannot be measured, so do not push it (ADR 020)")
     short = vault_sync.git(project, "rev-parse", "--short", "HEAD").strip()
     code, out = git(vault, "add", "--", *notes)
     if code == 0:
