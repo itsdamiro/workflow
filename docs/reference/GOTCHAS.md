@@ -40,6 +40,11 @@
 
 ## 2. Recipes
 
+### `strip()` on `git status --porcelain -z` corrupts the first path
+- **Symptom:** a script that reads git's status takes the first changed file for a different path, or drops it, only when that file is modified and unstaged.
+- **Cause:** the status line is two flag characters, a space and the path, and an unstaged change starts with a space (` M name`). A helper that strips the whole output removes that space from the first entry only, so every later entry parses and the first does not.
+- **Do this:** strip the right end only (`rstrip`) or not at all. `scripts/close_slice.py` reads the status through `git()` for this reason, and a test pins a first entry that is modified and unstaged.
+
 ### Re-run the context measurement (ADR 001)
 ```
 python3 adapters/claude/context-report/context_report.py ~/.claude/projects/<project-folder>
