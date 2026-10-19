@@ -20,7 +20,7 @@ import sys
 RECORD = re.compile(r"^(\d{3})-.+\.md$")
 STATUSES = {"proposed", "accepted", "superseded", "removed"}
 REQUIRED = ("type", "status", "date", "projects", "concepts", "amends", "supersedes", "tags")
-BLOCK_ITEM = re.compile(r"^\s+-(?:\s+(.*))?$")
+BLOCK_ITEM = re.compile(r"^\s*-(?:\s+(.*))?$")
 BAD_NAME = re.compile(r"[\[\]|#/:\\^]|\s{2}")
 
 

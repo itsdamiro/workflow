@@ -148,6 +148,11 @@ def prose(body: str) -> str:
     return re.sub(r"(?<!`)(`+)(?!`)[^\n]*?(?<!`)\1(?!`)", "", "\n".join(kept))  # a code span may be delimited by several backticks, so it may hold one
 
 
+def kebab(name: str) -> str:
+    """A project's folder name as its `project/` tag spells it: lower case, runs of other characters become one dash."""
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+
+
 def fold(name: str) -> str:
     """The form in which names are compared: Unicode-composed and lower case, as Obsidian resolves them."""
     return unicodedata.normalize("NFC", name).lower()
@@ -275,7 +280,7 @@ def lint(root: str, inbox_days: int = INBOX_DAYS, now: float | None = None, repo
         tags = read_tags(f.read())
     notes = read_vault(root)
     projects_dir = os.path.join(root, "Projects")
-    projects = {d.lower() for d in (os.listdir(projects_dir) if os.path.isdir(projects_dir) else [])
+    projects = {kebab(d) for d in (os.listdir(projects_dir) if os.path.isdir(projects_dir) else [])
                 if os.path.isdir(os.path.join(projects_dir, d))}
     by_name: dict[str, list[Note]] = {}
     for note in notes:

@@ -51,3 +51,7 @@ Left open: a config directory other than `~/.claude` (`--projects-dir` covers it
 - **Counting output tokens too.** The next answer is read over the output as well, but the guard's thresholds are written in input context; mixing the two would break the comparison. Would be right if a threshold were ever set on total size.
 
 **Accepted** by the owner on 2026-10-09, in chat, as written.
+
+## Amendment (2026-10-20): `context_report.py` is gone
+
+`session_contexts(path)` now lives in `last_context.py`; `context_report.py` and its report were deleted (ADR 001, amendment of the same day). Decision 3 above describes the earlier layout; the behaviour of the stats row is unchanged.

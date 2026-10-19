@@ -543,6 +543,10 @@ class Parsing(unittest.TestCase):
         rule = "# Title\n\ntext\n---\nkey: value\n---\nrest\n"  # a horizontal rule lower down is not frontmatter
         self.assertEqual(v.parse_frontmatter(rule), ({}, rule))
 
+    def test_block_lists_are_read_like_flow_lists(self):
+        meta, _ = v.parse_frontmatter("---\nconcepts:\n  - Alpha\n  - \"Beta, two\"\ntags:\n- topic/x\n---\nBody\n")
+        self.assertEqual(meta, {"concepts": ["Alpha", "Beta, two"], "tags": ["topic/x"]})
+
     def test_names_are_numbered_sentences_without_unsafe_characters(self):
         self.assertEqual(v.card_name(40, "the-persona-looks-up-notes-itself"), "040 - The persona looks up notes itself")
         self.assertEqual(v.card_name(7, "fix-a:b-[c]-#d"), "007 - Fix ab c d")

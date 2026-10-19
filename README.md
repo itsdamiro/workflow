@@ -84,7 +84,7 @@ Decide first (a decision record), then build with tests, then close the slice wi
 
 ### Planned (not built)
 
-- The `/handoff` command for tools other than Claude Code (today they follow `docs/sop/handoff.md`), and the pattern scan and checklist pane in the session guard.
+- The `/handoff` command for tools other than Claude Code (today they follow `docs/sop/handoff.md`).
 
 ## Where to read
 

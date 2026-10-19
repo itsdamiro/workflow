@@ -10,7 +10,7 @@ Status: design, 2026-10-08. Decisions and their alternatives are in `docs/decisi
 5. ADR format
 6. Extraction (`vault-sync`)
 7. `/handoff`
-8. Session guard
+8. Session guard (removed)
 9. Project types
 10. Open questions
 
@@ -120,9 +120,9 @@ The stats line records the day, commit, commits since the last row, their first 
 
 Running `/handoff` is the owner's go-ahead to commit and push the slice and the vault's generated notes; outside it, commit and push stay the owner's call. Writing the ADR itself happens before the code and is not part of this.
 
-## 8. Session guard
+## 8. Session guard (removed)
 
-Optional adapter (a Claude Code mod). It shows context size in the status line, shows a band with one close button (**Close slice** submits `/handoff`, the light close) at a soft threshold (default 150k tokens) and a stronger one at a hard threshold (default 200k). It never blocks. It may also show rate-limit windows and the closing checklist. Prototype in `adapters/claude/session-guard/`: validated, not yet checked drawing on the desktop app. The hard git rules stay in a hook, not in the mod.
+The optional Claude Code mod that showed context size and a **Close slice** button was removed on 2026-10-20 (ADR 001, amendment of that day). The owner types `/handoff`; the hard git rules stay in a hook.
 
 ## 9. Project types
 

@@ -23,6 +23,8 @@ import subprocess
 import sys
 import tempfile
 
+import vault_lint as vl
+
 RECORD = re.compile(r"^(\d{3})-(.+)\.md$")
 INDEX_ROW = re.compile(r"^\|\s*\[(\d{3})\]\([^)]*\)\s*\|.*\|\s*([^|]+?)\s*\|\s*$")
 ISO_DAY = re.compile(r"\d{4}-\d{2}-\d{2}")
@@ -63,43 +65,10 @@ def list_records(project: str, ref: str) -> dict[int, list[tuple[str, str]]]:
 # ---- reading a record ------------------------------------------------------------------------------------------------
 
 
-def split_flow(inner: str) -> list[str]:
-    parts, current, quote = [], "", ""
-    for ch in inner:
-        if quote:
-            quote = "" if ch == quote else quote
-        elif ch in "\"'":
-            quote = ch
-        elif ch == ",":
-            parts.append(current)
-            current = ""
-            continue
-        current += ch
-    return parts + [current]
-
-
-def parse_value(raw: str):
-    if not raw.startswith(("\"", "'")):
-        raw = re.sub(r"\s+#.*$", "", raw)
-    if raw.startswith("[") and raw.endswith("]"):
-        inner = raw[1:-1].strip()
-        return [x.strip().strip("\"'") for x in split_flow(inner)] if inner else []
-    return raw.strip().strip("\"'")
-
-
 def parse_frontmatter(text: str) -> tuple[dict, str]:
-    """The flat `key: value` and `key: [a, b]` subset the records use. Not a YAML parser."""
-    if not text.startswith("---\n"):
-        return {}, text
-    end = text.find("\n---", 4)
-    if end < 0:
-        return {}, text
-    meta = {}
-    for line in text[4:end].splitlines():
-        match = re.match(r"^([A-Za-z_][\w-]*):\s*(.*)$", line)
-        if match:
-            meta[match.group(1)] = parse_value(match.group(2).strip())
-    return meta, text[end + 4:].lstrip("\n")
+    """The record's or note's frontmatter fields and the body after it, read as the vault lint reads them (block lists included)."""
+    note = vl.parse_note("", "", text, 0)
+    return note.fields, note.body.lstrip("\n")
 
 
 def listify(value) -> list:
@@ -205,10 +174,6 @@ def card_name(number: int, slug: str) -> str:
     return f"{number:03d} - {sentence(slug)}"
 
 
-def kebab(name: str) -> str:
-    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
-
-
 YAML_WORDS = {"true", "false", "null", "yes", "no", "on", "off", "y", "n"}
 
 
@@ -224,7 +189,7 @@ def flow(values: list[str]) -> str:
 
 
 def tags(kind: str, status: str, project: str, *extra: str) -> str:
-    return flow(list(dict.fromkeys([f"type/{kind}", f"status/{status}", f"project/{kebab(project)}", *extra])))
+    return flow(list(dict.fromkeys([f"type/{kind}", f"status/{status}", f"project/{vl.kebab(project)}", *extra])))
 
 
 def frontmatter(fields: list[tuple[str, str]]) -> str:

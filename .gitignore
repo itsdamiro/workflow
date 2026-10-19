@@ -9,7 +9,6 @@ GEMINI.md
 AGENTS.md
 
 __pycache__/
-adapters/*/*/tsconfig.json
 
 # Local-only working state
 docs/HANDOFF.md

@@ -48,3 +48,10 @@ Savings depend on the owner restarting at slice boundaries; the guard only remin
 - **Dropped:** the footer crediting the Sympose audit, at the owner's word; the history keeps it.
 - **Limit:** the reference file is read only if the assistant chooses to; nothing enforces it. A code task that skips it loses the review rules, not the working rules.
 - **Alternatives rejected:** shortening every section in place: it keeps the code-only text in every session and rewrites wording that has paid for itself. Renumbering after the move: other files cite §7, §9 and §12.
+
+## Amendment (2026-10-20): the session guard and the cap simulation are removed
+
+- **Why:** the owner is closing the project and asked what could go. A final review found the session guard advisory only (its one button runs a command the owner can type; its README never confirmed the button works) and the cap simulation a one-off analysis for this record, run by hand and called by nothing.
+- **Done:** `adapters/claude/session-guard/` and its gate line are deleted, with SPEC §8, which now says so. `adapters/claude/context-report/context_report.py` (the report, `simulate`, `--caps`, `--restart-extra`) is deleted; `session_contexts`, the one live function, moved into `last_context.py`, which ADR 015 and the stats row use, and the tests that cover it are in `test_last_context.py`. The measurement above stands as history; it is not re-runnable from the repository.
+- **Limit:** nothing now reminds the owner to close at a context threshold; `docs/sop/start-a-fresh-session.md` still gives the sizes as advice.
+- **Alternatives rejected:** keeping the guard with its constants hard-coded: about 100 lines still to maintain for a button of unconfirmed use.

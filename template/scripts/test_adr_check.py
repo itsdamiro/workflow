@@ -181,6 +181,10 @@ class Shape(Case):
         self.put("001-a-good-record.md", text.replace("  - Session length\n  - \"Pattern scan\"", ""))
         self.assertTrue(self.has("concepts must be a list"))
 
+    def test_a_block_list_at_column_zero_is_read_as_the_vault_lint_reads_it(self):
+        self.put("001-a-good-record.md", GOOD.replace("concepts: [Session length, Pattern scan]", "concepts:\n- Session length\n- Pattern scan"))
+        self.assertEqual(self.found(), [])
+
     def test_a_comma_inside_quotes_does_not_split_a_name(self):
         self.put("001-a-good-record.md", GOOD.replace("[Session length, Pattern scan]", '["Cost, speed", Pattern scan]'))
         self.assertEqual(self.found(), [])

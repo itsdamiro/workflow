@@ -54,8 +54,8 @@ def owner_messages(path: str) -> list[str]:
                 event = json.loads(line)
             except ValueError:
                 continue
-            if isinstance(event, dict) and typed_text(event):
-                out.append(typed_text(event))
+            if isinstance(event, dict) and (text := typed_text(event)):
+                out.append(text)
     return out
 
 

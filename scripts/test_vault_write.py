@@ -267,6 +267,29 @@ class AddLine(Case):
         self.refused(self.add(path=".obsidian/Hidden.md"), "path")
         self.refused(self.add(path="../x.md"), "path")
 
+    def test_a_write_that_dies_midway_leaves_the_note_whole_and_no_temporary_file(self):
+        with mock.patch.object(os, "replace", side_effect=OSError("disk full")):
+            with self.assertRaises(OSError):
+                self.add()
+        self.assertEqual(self.read("Ideas/Notes.md"), NOTES)
+        self.assertEqual([n for n in os.listdir(os.path.join(self.root, "Ideas")) if n.startswith(".")], [])
+
+    def test_a_write_keeps_the_notes_permissions(self):
+        os.chmod(os.path.join(self.root, "Ideas", "Notes.md"), 0o644)
+        self.assertEqual(self.add()[0], 0)
+        self.assertEqual(os.stat(os.path.join(self.root, "Ideas", "Notes.md")).st_mode & 0o777, 0o644)
+
+    def test_the_missing_values_check_reads_only_tags_md(self):
+        with mock.patch.object(vl, "read_vault", side_effect=AssertionError("read the whole vault")):
+            self.assertEqual(vw.missing_values(self.root), [])
+
+    def test_a_capture_tags_a_project_as_the_sync_does(self):
+        self.put("Projects/My project/My project.md", HUB.replace("project/alpha", "project/my-project"))
+        self.put("Garden.md", GARDEN.replace("[[Notes]]", "[[Notes]] [[My project]]"))
+        code, _, err = self.capture(project="My project")[:3]
+        self.assertEqual(code, 0, err)
+        self.assertIn("project/my-project", self.read("Projects/My project/Captured/Every write is listed.md"))
+
     def test_a_write_that_does_not_read_back_puts_the_old_content_back(self):
         def damaged(full, text):
             with open(full, "w", encoding="utf-8") as f:

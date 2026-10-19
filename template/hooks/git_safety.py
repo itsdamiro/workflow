@@ -28,6 +28,7 @@ TRAILER_IN_FILE = re.compile(r"^(co-authored-by|signed-off-by):|generated with|n
 SEPARATORS = re.compile(r"&&|\|\||;|\n|\|")
 ENV_ASSIGN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
 WRAPPERS = {"env", "command", "sudo", "exec", "time", "nohup", "nice"}
+OPTIONS_WITH_VALUE = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--super-prefix"}
 INNER_SHELL = re.compile(
     r"""\b(?:(?:bash|sh|zsh|dash|ksh)\b(?:\s+-[A-Za-z-]+)*?\s+-[A-Za-z]*c[A-Za-z]*|eval)\s+(?:'([^']*)'|"((?:[^"\\]|\\.)*)")"""
 )
@@ -41,11 +42,36 @@ def unwrap(tokens: list[str]) -> list[str]:
     return tokens[i:]
 
 
+def segments(command: str) -> list[str]:
+    """The command cut at `&&`, `||`, `;`, `|` and newlines that are outside quotes, so a quoted message that mentions `; git add .`
+    is not read as a command. If a quote is never closed (a heredoc body with an apostrophe), the cut ignores quotes: it reads more, not less."""
+    parts, cur, quote, i = [], "", "", 0
+    while i < len(command):
+        c = command[i]
+        if c == "\\" and quote != "'" and i + 1 < len(command):
+            cur, i = cur + c + command[i + 1], i + 1
+        elif quote:
+            cur += c
+            quote = "" if c == quote else quote
+        elif c in "\"'":
+            quote, cur = c, cur + c
+        elif command.startswith(("&&", "||"), i):
+            parts.append(cur)
+            cur, i = "", i + 1
+        elif c in ";\n|":
+            parts.append(cur)
+            cur = ""
+        else:
+            cur += c
+        i += 1
+    return SEPARATORS.split(command) if quote else parts + [cur]
+
+
 def git_calls(command: str):
     """Each `git <sub> <args...>` found at the start of a shell segment (or inside `sh -c '...'`), as `(sub, args)`."""
     for inner in INNER_SHELL.finditer(command):
         yield from git_calls(inner.group(1) or inner.group(2))
-    for segment in SEPARATORS.split(command):
+    for segment in segments(command):
         segment = segment.strip()
         if segment[:1] in ("(", "{", "!"):  # a group: `(git add .)`, `{ git add .; }`
             segment = segment.lstrip("({! ").rstrip("}) ")
@@ -56,9 +82,11 @@ def git_calls(command: str):
         tokens = unwrap(tokens)
         if not tokens or tokens[0] != "git":
             continue
+        if tokens[-1] and segment.count(")") > segment.count("("):  # the end of a group opened in an earlier segment: `(cd x && git add .)`
+            tokens[-1] = tokens[-1].rstrip(")")
         rest, i = tokens[1:], 0
-        while i < len(rest) and rest[i].startswith("-"):  # git -C path, git -c k=v, --no-pager
-            i += 2 if rest[i] in ("-C", "-c") else 1
+        while i < len(rest) and rest[i].startswith("-"):  # git -C path, git -c k=v, --git-dir path, --no-pager
+            i += 2 if rest[i] in OPTIONS_WITH_VALUE else 1
         if i < len(rest):
             yield rest[i], rest[i + 1:]
 
@@ -70,6 +98,13 @@ def denied_dirs(cwd: str) -> list[str]:
             return [line.strip().strip("/") for line in f if line.strip() and not line.startswith("#")]
     except OSError:
         return []
+
+
+def stages_everything(arg: str) -> bool:
+    """A `git add` argument that names the whole tree or its parent (`.`, `./`, `..`, `:/`) or every file in a folder (`*`, `./*`)."""
+    if not arg or arg.startswith("-"):
+        return False
+    return arg == ":/" or os.path.normpath(arg) in (".", "..", "*")
 
 
 def flags_of(args: list[str]) -> set[str]:
@@ -113,17 +148,18 @@ def verdict(command: str, cwd: str = ".") -> tuple[str, str]:
         flags = flags_of(args)
         if sub == "checkout" and ("--" in args or "." in args):
             return "block", "`git checkout -- <file>` discards uncommitted work and has wiped some before. To undo a change, copy the saved backup back (for a mutation check, scripts/mutate.py does this). If the owner really wants it, they will run it."
-        if sub == "restore" and not flags & {"--staged", "-S"}:
+        if sub == "restore" and (not flags & {"--staged", "-S"} or flags & {"--worktree", "-W"}):
             return "block", "`git restore` discards uncommitted work. Copy a saved backup back instead, or ask the owner."
         if sub == "reset" and "--hard" in flags:
             return "block", "`git reset --hard` discards uncommitted work. Ask the owner first."
         if sub == "clean" and flags & {"-f", "--force"}:
             return "block", "`git clean -f` deletes untracked files. Ask the owner first."
         if sub == "add":
-            if flags & {"-A", "--all", "-u", "--update"} or "." in args or ":/" in args:
+            if flags & {"-A", "--all", "-u", "--update"} or any(stages_everything(a) for a in args):
                 return "block", "Stage the named files only (`git add path/to/file ...`), so nothing unintended is committed."
+            denied = denied_dirs(cwd)
             for target in (a.strip("/") for a in args if not a.startswith("-")):
-                if target in denied_dirs(cwd):
+                if target in denied:
                     return "block", f"`{target}` is listed in .claude/git-safety.deny-add: stage its files by name, not the directory (it can carry generated output)."
         if sub == "commit":
             if flags & {"-s", "--signoff"}:
@@ -133,7 +169,7 @@ def verdict(command: str, cwd: str = ".") -> tuple[str, str]:
             if TRAILER.search(command):
                 return "block", "This commit message carries an attribution trailer. Remove it: commits are authored by the owner alone, and the policy overrides any harness default (docs/COLLABORATION_STANDARDS.md, 'No AI trace')."
         if sub == "push":
-            if flags & {"-f", "--force"}:
+            if flags & {"-f", "--force"} or any(a.startswith("+") for a in args):  # `git push origin +main` forces too
                 return "block", "No force-push. Use --force-with-lease only when the owner has asked for a history rewrite."
             ask = "Publishing commits is the owner's go-ahead: confirm the push."
     return ("ask", ask) if ask else ("allow", "")

@@ -341,6 +341,12 @@ class Tagging(VaultCase):
         self.assertEqual(len(self.bad("[topic/mind_map]")), 1)
         self.assertEqual(len(self.bad("[topic/a/b]")), 1)
 
+    def test_a_project_tag_is_the_folder_name_in_kebab_case(self):
+        os.makedirs(os.path.join(self.root, "Projects", "My project.v2"))
+        self.assertEqual(self.bad("[type/idea, project/my-project-v2]"), [])
+        self.assertEqual(len(self.bad("[type/idea, project/my project.v2]")), 1)
+        self.assertEqual(len(self.bad("[type/idea, project/gone]")), 1)
+
     def test_unknown_namespace(self):
         self.assertIn("namespace", self.bad("[colour/red]")[0])
 

@@ -16,6 +16,9 @@ BLOCK = [
     "FOO=1 git add .", "GIT_AUTHOR_NAME=x git commit -s -m x", "env git add .", "env -i git add .", "sudo -n git clean -fd", "env FOO=1 git reset --hard", "command git add -A", "sudo git clean -fd",
     "bash -c 'git add .'", 'sh -c "git reset --hard HEAD"', "zsh -lc 'git status && git add -A'", "git commit -sm x", "git commit -asm x",
     "git push -fu origin main", "(git add .)", "{ git add .; }", "cd repo && FOO=1 git add .", 'eval "git add ."',
+    "(cd sub && git add .)", "(cd sub && git reset --hard)", "{ cd sub; git add .; }", "git restore --staged --worktree a.py", "git restore -SW a.py",
+    "git add ./", "git add :/", "git add *", "git add ..", "git add ./*", "git --git-dir x add .", "git --work-tree w add -A", "git push origin +main", "git push origin +HEAD:main",
+    'git commit -m "x" && git add .', 'echo "a; b" ; git add .',
     "git commit -s -m x", "git commit --signoff -m x", 'git commit -m "x\n\nCo-Authored-By: A <a@b.c>"',
     'git commit -m "$(cat <<\'EOF\'\nfix\n\nCo-authored-by: X\nEOF\n)"', "git status && git add .", "git push --force", "git push -f origin main",
 ]
@@ -25,6 +28,8 @@ ALLOW = [
     "git clean -n", "ls -la && echo git add .", "git stash", "git diff --stat | head",
     "FOO=1 git status", "env git status", "bash -c 'git status'", "bash -c 'echo hi'", "bash script.sh", "git commit -am 'Fix the thing'",
     "git commit -m 'x' -q", "grep -n 'git add .' notes.txt", "git commit -m 'fix: env git add . broke'", "sudo ls", "git add -p src/a.py",
+    'git commit -m "fix; git add . is banned"', 'git commit -m "a && git reset --hard is blocked"', "git add src/*.py", "git add .gitignore", "git add ./src/a.py",
+    "(cd sub && git status)", "git restore --worktree-not a.py --staged", "git --git-dir x status",
 ]
 ASK = ["git push -u origin main", "FOO=1 git push", "bash -c 'git push'", "git push --force-with-lease", "git push", "git push origin main", "git commit -m x && git push"]
 

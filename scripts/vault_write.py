@@ -82,12 +82,15 @@ def write_new(root: str, rel: str, text: str) -> None:
         f.write(text)
 
 
-def vault_facts(root: str):
+def read_tags_file(root: str):
     if not os.path.isfile(os.path.join(root, "Tags.md")):
         raise Refused(f"{root} has no Tags.md: not a vault")
     with open(os.path.join(root, "Tags.md"), encoding="utf-8") as f:
-        tags = vl.read_tags(f.read())
-    return tags, {vl.fold(n.name) for n in vl.read_vault(root)}
+        return vl.read_tags(f.read())
+
+
+def vault_facts(root: str):
+    return read_tags_file(root), {vl.fold(n.name) for n in vl.read_vault(root)}
 
 
 def capture(root: str, a) -> str:
@@ -112,7 +115,7 @@ def capture(root: str, a) -> str:
         raise Refused(f"a note named {a.title!r} exists")
     topics = ", ".join(f"topic/{t}" for t in a.topic)
     text = (f"---\ntype: capture\nstatus: draft\ncreated: {a.created}\nprojects: [{a.project}]\n"
-            f"tags: [type/capture, status/draft, project/{a.project.lower()}, {topics}]\n---\n"
+            f"tags: [type/capture, status/draft, project/{vl.kebab(a.project)}, {topics}]\n---\n"
             f"> {quote}\n\nAbout: {', '.join(f'[[{n}]]' for n in a.about)}\n")
     rel = f"Projects/{a.project}/Captured/{a.title}.md"
     inside(root, rel)
@@ -166,9 +169,24 @@ def trim(lines: list[str], start: int, end: int) -> int:
     return end
 
 
+def write_atomically(full: str, text: str) -> None:
+    """Replace the file through a hidden temporary file beside it, so a crash or a full disk cannot leave the owner's note half written."""
+    full = os.path.realpath(full)
+    mode = os.stat(full).st_mode & 0o777
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(full), prefix=".write-")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as f:
+            f.write(text)
+        os.chmod(tmp, mode)
+        os.replace(tmp, full)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.remove(tmp)
+        raise
+
+
 def _replace(full: str, text: str) -> None:
-    with open(full, "w", encoding="utf-8", newline="") as f:
-        f.write(text)
+    write_atomically(full, text)
 
 
 def add_line(root: str, a) -> str:
@@ -198,14 +216,13 @@ def write_checked(full: str, old: str, expected: str) -> None:
     with open(full, encoding="utf-8", newline="") as f:
         written = f.read()
     if written != expected:
-        with open(full, "w", encoding="utf-8", newline="") as f:  # put the old content back
-            f.write(old)
+        write_atomically(full, old)  # put the old content back
         raise Refused("the file did not read back as the old content plus the addition; the old content was put back")
 
 
 def missing_values(root: str) -> list[tuple[str, str]]:
     """The values this script writes that Tags.md does not list, as (namespace, value)."""
-    tags, _ = vault_facts(root)
+    tags = read_tags_file(root)
     return [(ns, v) for ns, v in NEEDED.items() if v not in tags.closed[ns]]
 
 

@@ -3,7 +3,7 @@
 
 Usage: python3 last_context.py [SESSION_ID] [--projects-dir DIR]
 
-Prints one integer: the context (new, cache-written and cache-read input tokens, as in context_report.py) the session's
+Prints one integer: the context (new, cache-written and cache-read input tokens) the session's
 last main-thread answer was read over. SESSION_ID defaults to $CLAUDE_CODE_SESSION_ID and DIR to ~/.claude/projects. The
 transcript is the one file <SESSION_ID>.jsonl directly under a folder of DIR; it is never guessed from the newest file.
 Exit 0 with the number; exit 1 with nothing on stdout and one line on stderr when no number can be named.
@@ -11,13 +11,35 @@ Exit 0 with the number; exit 1 with nothing on stdout and one line on stderr whe
 
 import argparse
 import glob
+import json
 import os
 import re
 import sys
 
-import context_report as cr
-
 UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE)
+
+
+def session_contexts(path: str) -> list[int]:
+    """The context of each main-thread answer in one transcript, in order; each message id counts once, one without usage not at all."""
+    seen, ctx = set(), []
+    with open(path, encoding="utf-8", errors="replace") as f:
+        for line in f:
+            try:
+                e = json.loads(line)
+            except ValueError:
+                continue
+            if e.get("type") != "assistant" or e.get("isSidechain"):
+                continue
+            m = e.get("message") or {}
+            mid = m.get("id")
+            if mid is not None and mid in seen:
+                continue
+            seen.add(mid)
+            u = m.get("usage") or {}
+            total = sum(u.get(k, 0) for k in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"))
+            if total:
+                ctx.append(total)
+    return ctx
 
 
 def find_transcript(session_id: str | None, projects_dir: str) -> str:
@@ -35,7 +57,7 @@ def find_transcript(session_id: str | None, projects_dir: str) -> str:
 
 
 def last_context(session_id: str | None, projects_dir: str) -> int:
-    ctx = cr.session_contexts(find_transcript(session_id, projects_dir))
+    ctx = session_contexts(find_transcript(session_id, projects_dir))
     if not ctx:
         raise LookupError("the transcript has no answer with usage")
     return ctx[-1]

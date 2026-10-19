@@ -34,7 +34,7 @@
 - **Do this:** write the option out (`--context-tokens "$N"`), or branch with `if [ -n "$N" ]`. It hit two closes on 2026-10-09.
 
 ### A mod's button does nothing, and the app logs `ui_press not handled`
-- **Symptom:** the button draws and can be pressed, nothing happens, and the app log (`claude.ai-web.log`) has `engine surface: ui_press not handled` with the plugin and the key. The session guard's **Close slice** did this for two days (fixed in 0.3.0).
+- **Symptom:** the button draws and can be pressed, nothing happens, and the app log (`claude.ai-web.log`) has `engine surface: ui_press not handled` with the plugin and the key. The session guard's **Close slice** (since removed, ADR 001 amendment of 2026-10-20) did this for two days.
 - **Cause:** the press handler threw, the engine skipped that hook, and the app reports a skipped handler as "not handled". The engine's notes list other causes (no press site, a stale drawing, a key mismatch), which sent the first look at the load path and at redraws. Here the cause was `$.prompt.submit({ text: '/handoff' })`: the engine refuses a prompt that begins with `/`.
 - **Do this:** run a slash command with `$.command.run({ command, args })`. To tell a skipped handler from a stale drawing, press the button inside the plugin's own test (`claude plugin test <folder>`, with `$.ui.mount` and `press`), which prints the reason the hook was skipped; the app prints none. Hide a band only after the action has not thrown.
 
@@ -51,11 +51,8 @@
 - **Do this:** clear the child session, set the model with `set_session_model` (and the effort), confirm it with `get_session`, then send the brief. Measured once, on one ADR-sized task at medium effort: both models wrote about 1,800 words, the 5-hour meter moved about 3 points (Sonnet) and 4 (Opus), child context 100k and 118k tokens; Opus caught more cases (an edit to a note the owner may have hand-edited, a `git push` inside a script bypassing the git-safety hook). One pair proves little.
 - **Measured again (2026-10-19), a correctness review and a pattern scan of one build by each model, at high effort, against defects known from the fixes made after it:** Opus found 6 of 7 and Sonnet 5 (two only as plausible), and Opus added two findings the fixes never covered (one was real: the ahead check read `@{upstream}`, a push goes to `@{push}`). The scans gave the same core patterns from both; Opus cited lines of the file where Sonnet cited lines of the diff, which the lint's cited-code check cannot use. Each run took 69k to 95k tokens. Two pairs: Opus is one or two findings better on a review, not a different class.
 
-### Re-run the context measurement (ADR 001)
-```
-python3 adapters/claude/context-report/context_report.py ~/.claude/projects/<project-folder>
-```
-Prints session length, context size and what a cap of 150k, 200k and 300k would save (`--caps`, `--restart-extra`). Aggregates only. Claude Code transcripts only, main thread only. It does not reproduce ADR 001's split of reads by kind; count image reads by number when you add that.
+### Read a session's context size (ADR 015)
+The report that measured session length and simulated context caps (ADR 001) was removed on 2026-10-20.
 
 `adapters/claude/context-report/last_context.py` (ADR 015) prints one number, the context of the current session's last answer, from `$CLAUDE_CODE_SESSION_ID`; it exits 1 and prints nothing when it cannot name that transcript, and the stats row then shows a dash.
 
