@@ -340,5 +340,63 @@ class AddValue(Case):
                                       "--about", "Idea", "--topic", "mind")[0], 0)
 
 
+class AddTopic(Case):
+    NESTED = TAGS.replace("- `topic/`: the owner's own topics, added by hand\n",
+                          "- `topic/`: topics, from the list below\n"
+                          "  - Listed topics, each a question to filter by:\n"
+                          "    - `topic/mind`: what shaped the owner's thinking?\n"
+                          "    - `topic/consent`: where does the user have to say yes?\n"
+                          "- `lang/`: the language of a pattern\n")
+
+    def add(self, topic="cost", question="what does it cost?"):
+        return self.run_cli("add-topic", "--topic", topic, "--question", question)
+
+    def test_a_topic_goes_right_after_the_last_listed_one_with_its_indent_and_nothing_else_changes(self):
+        self.put("Tags.md", self.NESTED)
+        self.assertEqual(self.add(), (0, "Tags.md\n", ""))
+        self.assertEqual(self.read("Tags.md"), self.NESTED.replace(
+            "yes?\n", "yes?\n    - `topic/cost`: what does it cost?\n"))
+
+    def test_a_continuation_of_the_last_bullet_stays_with_it(self):
+        self.put("Tags.md", self.NESTED.replace("yes?\n", "yes?\n      more of the same bullet\n"))
+        self.add()
+        self.assertEqual(self.read("Tags.md").splitlines()[-3:], [
+            "      more of the same bullet", "    - `topic/cost`: what does it cost?", "- `lang/`: the language of a pattern"])
+
+    def test_windows_line_ends_and_a_missing_final_newline_are_kept(self):
+        self.put("Tags.md", self.NESTED.replace("\n", "\r\n"))
+        self.add()
+        self.assertEqual(self.read("Tags.md"), self.NESTED.replace("yes?\n", "yes?\n    - `topic/cost`: what does it cost?\n").replace("\n", "\r\n"))
+        self.put("Tags.md", self.NESTED.split("- `lang/`")[0].rstrip("\n"))
+        self.add()
+        self.assertTrue(self.read("Tags.md").endswith("yes?\n    - `topic/cost`: what does it cost?\n"))
+
+    def test_the_new_topic_is_then_listed_for_the_lint(self):
+        self.put("Tags.md", self.NESTED)
+        self.add()
+        self.assertIn("cost", vw.vault_facts(self.root)[0].topics)
+
+    def test_a_listed_topic_a_bad_word_a_bad_question_a_note_of_that_name_or_no_list_is_refused(self):
+        self.put("Tags.md", self.NESTED)
+        self.refused(self.add("consent"), "already listed")
+        for bad in ("Cost", "two words", "a/b", "x-", ""):
+            self.refused(self.add(bad), "kebab-case")
+        for bad in ("", "  ", "two\nlines"):
+            self.refused(self.add(question=bad), "empty or has a line break")
+        self.refused(self.add("idea"), "a topic is never a concept's own name")
+        self.put("Tags.md", TAGS)
+        self.refused(self.add(), "lists no topic yet")
+        self.assertEqual(self.read("Tags.md"), TAGS)
+
+    def test_a_write_that_does_not_read_back_puts_the_old_content_back(self):
+        self.put("Tags.md", self.NESTED)
+        def damaged(full, text):
+            with open(full, "w", encoding="utf-8") as f:
+                f.write(text[: len(text) // 2])
+        with mock.patch.object(vw, "_replace", damaged):
+            self.refused(self.add(), "put back")
+        self.assertEqual(self.read("Tags.md"), self.NESTED)
+
+
 if __name__ == "__main__":
     unittest.main()

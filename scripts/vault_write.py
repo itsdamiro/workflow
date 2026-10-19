@@ -6,6 +6,7 @@ Usage: python3 scripts/vault_write.py VAULT capture --project NAME --source FILE
        python3 scripts/vault_write.py VAULT new --path RELPATH --text-file FILE|-
        python3 scripts/vault_write.py VAULT add-line --path RELPATH --line TEXT [--under HEADING]
        python3 scripts/vault_write.py VAULT add-value --namespace type|status --value WORD
+       python3 scripts/vault_write.py VAULT add-topic --topic WORD --question TEXT
 
 Every subcommand writes nothing and exits 1 with the reason on stderr if a check fails. The script cannot see the chat:
 that the owner approved the text is the caller's duty, and the report lists every write. It never replaces or deletes.
@@ -230,6 +231,41 @@ def add_value(root: str, a) -> str:
     return "Tags.md"
 
 
+TOPIC_LINE = re.compile(r"^([ \t]*)[-*][ \t]+`topic/[a-z0-9]+(?:-[a-z0-9]+)*`[ \t]*:")
+
+
+def add_topic(root: str, a) -> str:
+    """List one topic in Tags.md: a new bullet, indented like the last listed topic, placed right after it."""
+    tags, names = vault_facts(root)
+    if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", a.topic):
+        raise Refused(f"{a.topic!r} is not a lowercase kebab-case word")
+    if a.topic in tags.topics:
+        raise Refused(f"topic/{a.topic} is already listed")
+    if vl.fold(a.topic.replace("-", " ")) in names:
+        raise Refused(f"a note is named {a.topic.replace('-', ' ')!r}: a topic is never a concept's own name, so use that note")
+    question = a.question.strip()
+    if not question or any(c in question for c in "\r\n\x00"):
+        raise Refused("the question is empty or has a line break")
+    full = os.path.join(root, "Tags.md")
+    with open(full, encoding="utf-8", newline="") as f:
+        old = f.read()
+    lines = old.splitlines(keepends=True)
+    hits = [k for k, l in enumerate(lines) if TOPIC_LINE.match(l)]
+    if not hits:
+        raise Refused("Tags.md lists no topic yet, so there is no list to extend; the owner starts it")
+    indent = TOPIC_LINE.match(lines[hits[-1]]).group(1)
+    at = hits[-1] + 1
+    while at < len(lines) and lines[at].strip() and len(lines[at]) - len(lines[at].lstrip(" \t")) > len(indent):
+        at += 1  # a continuation of the last bullet stays with it
+    eol = "\r\n" if "\r\n" in old else "\n"
+    gap = eol if not lines[at - 1].endswith(("\n", "\r")) else ""
+    expected = "".join(lines[:at]) + gap + f"{indent}- `topic/{a.topic}`: {question}" + eol + "".join(lines[at:])
+    if a.topic not in vl.read_tags(expected).topics:
+        raise Refused("the new line would not be read as a listed topic")
+    write_checked(full, old, expected)
+    return "Tags.md"
+
+
 def main(argv: list[str]) -> int:
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     p.add_argument("vault")
@@ -252,11 +288,14 @@ def main(argv: list[str]) -> int:
     v = sub.add_parser("add-value")
     v.add_argument("--namespace", required=True, choices=vl.CLOSED_NAMESPACES)
     v.add_argument("--value", required=True)
+    t = sub.add_parser("add-topic")
+    t.add_argument("--topic", required=True)
+    t.add_argument("--question", required=True)
     args = p.parse_args(argv)
     try:
         if not os.path.isdir(args.vault):
             raise Refused(f"{args.vault} is not a folder")
-        written = {"capture": capture, "new": new, "add-line": add_line, "add-value": add_value}[args.kind](args.vault, args)
+        written = {"capture": capture, "new": new, "add-line": add_line, "add-value": add_value, "add-topic": add_topic}[args.kind](args.vault, args)
     except Refused as err:
         print(f"refused: {err}", file=sys.stderr)
         return 1
