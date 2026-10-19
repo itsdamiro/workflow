@@ -23,3 +23,4 @@ Lightweight records for anything durable. Format: `TEMPLATE.md`. Standard: `docs
 | [017](017-vault-notes-by-proposal-and-approval.md) | Notes on the owner's side of the vault are proposed, shown in full and written only on the owner's approval | Accepted |
 | [018](018-brands-and-the-board-in-the-vault.md) | Brands have their own vault folder, and their images live in a gitignored `Board/` folder beside it | Accepted |
 | [019](019-gates-in-ci-cloud-and-routines-deferred.md) | Gates run in CI for every project; cloud sessions and routines wait for a job that needs them | Accepted |
+| [020](020-the-close-commits-the-vaults-generated-notes.md) | The close commits the vault's generated notes by path, and pushes the vault beside the project | Proposed |
