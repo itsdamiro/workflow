@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(__file__))
 import close_slice as c  # noqa: E402
@@ -40,9 +41,12 @@ class Close(unittest.TestCase):
             ts.put(self.vault, rel, text)
 
     def close(self, *extra):
+        return self.close_at(self.vault, *extra)
+
+    def close_at(self, vault, *extra):
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
-            code = c.main([self.repo, self.vault, *extra])
+            code = c.main([self.repo, vault, *extra])
         return code, out.getvalue(), err.getvalue()
 
     def test_a_clean_close_exits_0_and_shows_the_three_results(self):
@@ -226,6 +230,77 @@ class Close(unittest.TestCase):
         _, out, _ = self.close()
         self.assertIn("vault git: not committed (the vault has unmerged paths)", out)
         self.assertEqual(ts.git(self.vault, "rev-parse", "HEAD"), before)
+
+    def test_a_detached_head_is_not_committed_to(self):
+        self.vault_repo()
+        ts.git(self.vault, "checkout", "-q", "--detach")
+        before = ts.git(self.vault, "rev-parse", "HEAD")
+        _, out, _ = self.close()
+        self.assertIn("vault git: not committed (the vault's HEAD is detached)", out)
+        self.assertEqual(ts.git(self.vault, "rev-parse", "HEAD"), before)
+
+    def test_a_commit_that_fails_leaves_nothing_staged(self):
+        self.vault_repo()
+        hook = os.path.join(self.vault, ".git", "hooks", "pre-commit")
+        ts.put(self.vault, os.path.join(".git", "hooks", "pre-commit"), "#!/bin/sh\necho refused by a hook >&2\nexit 1\n")
+        os.chmod(hook, 0o755)
+        _, out, _ = self.close()
+        self.assertIn("vault git: not committed (", out)
+        self.assertNotIn("committed 3", out)
+        self.assertEqual(ts.git(self.vault, "diff", "--cached", "--name-only"), "")
+        self.assertIn('?? "Projects/demo/demo - Stats.md"', ts.git(self.vault, "status", "--porcelain", "--untracked-files=all"))
+
+    def test_a_note_the_owner_untracked_is_not_committed_back(self):
+        self.vault_repo()
+        ts.git(self.vault, "rm", "-q", "--cached", "Projects/demo/Moved.md")  # staged deletion; the file stays in the work tree
+        _, out, _ = self.close()
+        self.assertRegex(out, r"(?m)^vault git: committed 3 note\(s\) as ")
+        self.assertNotIn("Projects/demo/Moved.md", self.committed())
+        self.assertIn("D  Projects/demo/Moved.md", ts.git(self.vault, "status", "--porcelain"))
+
+    def test_a_vault_path_spelled_in_another_case_is_still_its_repository(self):
+        self.vault_repo()
+        other = os.path.join(self.tmp.name, "VAULT")
+        if not os.path.exists(other):
+            self.skipTest("a case-sensitive file system")
+        code, out, _ = self.close_at(other)
+        self.assertRegex(out, r"(?m)^vault git: committed 3 note\(s\) as ")
+
+    def test_generated_true_is_read_as_the_sync_reads_it(self):
+        self.vault_repo()
+        ts.put(self.vault, "Projects/demo/Old.md", GENERATED.format("shout\n").replace("generated: true", "generated: True"))
+        _, out, _ = self.close()
+        self.assertIn("Projects/demo/Old.md", self.committed())
+
+    def test_a_git_status_that_fails_is_not_reported_as_nothing_to_commit(self):
+        self.vault_repo()
+        ts.put(self.vault, os.path.join(".git", "index"), "garbage")
+        code, out, _ = self.close()
+        self.assertEqual(code, 0, out)
+        self.assertRegex(out, r"(?m)^vault git: not committed \(")
+        self.assertNotIn("nothing to commit", out)
+
+    def test_a_git_that_cannot_run_is_reported_and_does_not_change_the_exit_code(self):
+        self.vault_repo()
+        real = c.git
+
+        def refuse_add(vault, *args):
+            if args[0] == "add":
+                raise OSError("Argument list too long")
+            return real(vault, *args)
+        with mock.patch.object(c, "git", side_effect=refuse_add):
+            code, out, _ = self.close()
+        self.assertEqual(code, 0, out)
+        self.assertIn("vault git: not committed (Argument list too long)", out)
+
+    def test_a_symlink_is_not_committed(self):
+        self.vault_repo()
+        outside = os.path.join(self.tmp.name, "outside.md")
+        ts.put(self.tmp.name, "outside.md", GENERATED.format("elsewhere\n"))
+        os.symlink(outside, os.path.join(self.vault, "Projects/demo/Link.md"))
+        _, out, _ = self.close()
+        self.assertNotIn("Projects/demo/Link.md", self.committed())
+        self.assertIn("?? Projects/demo/Link.md", ts.git(self.vault, "status", "--porcelain"))
 
     def test_a_lint_error_commits_nothing(self):
         self.vault_repo()

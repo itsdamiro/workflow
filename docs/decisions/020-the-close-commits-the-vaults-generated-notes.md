@@ -62,3 +62,13 @@ tags: [type/decision, status/accepted, project/workflow, topic/vault, topic/cons
 2. **Push:** beside the project's, as the assistant's visible `git push`.
 3. **Backlog:** the first close sweeps the waiting generated notes into one commit.
 4. **`.gitignore`:** accepted as it is. The owner will restore `Board/` and decide on `.trash/` themselves; the close never touches `.gitignore`, `Board/` or `.trash/`, so this does not hold up the build.
+
+## Amendment (2026-10-19): what the review of the build added
+
+The two reviews of `/handoff full` read the first build and found cases the Decision did not name. Each is now in the script and pinned by a test:
+
+- **More refusals, none stopping the close:** a detached HEAD (a commit there is on no branch), an unmerged path (a failed `stash pop` leaves one without a `MERGE_HEAD`), and a `git status` that fails (reported, not read as "nothing to commit").
+- **More paths that never qualify:** a symlink, and a path with an index entry `D` (the owner deleted or untracked it, so committing the file back would undo their act). A note's `generated:` value is read as the sync reads it (`True` counts).
+- **A refused commit** (a hook, no identity) unstages the notes it had added, so they do not look like the owner's staged changes.
+- **A git that cannot run** is reported on the `vault git:` line and does not change the exit code.
+- **Declined:** the six-marker list (cherry-pick and revert were dropped: git refuses the commit itself and the failure line says so); the "no upstream" line stays, since it saves a doomed push prompt.

@@ -50,24 +50,29 @@ def snapshot(vault: str) -> dict[str, str]:
 def git(vault: str, *args: str) -> tuple[int, str]:
     """Run git in the vault with literal pathspecs, so a note named with `*` or `[` is matched as written."""
     done = subprocess.run(["git", "-C", vault, "--literal-pathspecs", *args], capture_output=True, encoding="utf-8", errors="replace")
-    return done.returncode, done.stdout if done.returncode == 0 else (done.stderr.strip() or done.stdout.strip())
+    return done.returncode, done.stdout.rstrip() if done.returncode == 0 else (done.stderr.strip() or done.stdout.strip())
 
 
 def is_generated(vault: str, rel: str) -> bool:
+    """Read as the sync reads it (`vault_sync.is_generated`); a symlink never counts, so a link out of the vault is never committed."""
+    path = os.path.join(vault, rel)
     try:
-        with open(os.path.join(vault, rel), encoding="utf-8") as f:
-            return vault_sync.parse_frontmatter(f.read())[0].get("generated") == "true"
+        if os.path.islink(path):
+            return False
+        with open(path, encoding="utf-8") as f:
+            return vault_sync.is_generated(f.read())
     except (OSError, UnicodeDecodeError):
         return False
 
 
-def changed_generated_notes(vault: str) -> tuple[list[str], bool]:
-    """Paths git shows as modified or untracked that are Markdown outside any hidden folder and say `generated: true` (ADR 020, decision 1),
-    and whether any path is unmerged. A deleted file cannot be read, so a deletion never qualifies; a rename is the owner's act and is skipped."""
+def changed_generated_notes(vault: str) -> list[str]:
+    """Paths git shows as modified or untracked that are Markdown outside any hidden folder and say `generated: true` (ADR 020, decision 1).
+    A path the owner has deleted or untracked (an index entry `D`) never qualifies, nor does a rename, which is skipped whole.
+    Raises RuntimeError with the reason when git cannot say, or a path is unmerged."""
     code, status = git(vault, "status", "--porcelain=v1", "-z", "--untracked-files=all")
     if code:
-        return [], False
-    fields, found, unmerged, i = status.split("\0"), [], False, 0
+        raise RuntimeError(status.splitlines()[0] if status else "git status failed")
+    fields, found, dropped, i = status.split("\0"), set(), set(), 0
     while i < len(fields):
         entry = fields[i]
         i += 1
@@ -76,52 +81,44 @@ def changed_generated_notes(vault: str) -> tuple[list[str], bool]:
         flags, rel = entry[:2], entry[3:]
         if "R" in flags or "C" in flags:
             i += 1  # the original path follows
-            continue
-        if "U" in flags or flags in ("AA", "DD"):
-            unmerged = True
-            continue
-        if not rel.endswith(".md") or any(part.startswith(".") for part in rel.split("/")):
-            continue
-        if is_generated(vault, rel):
-            found.append(rel)
-    return sorted(found), unmerged
+        elif "U" in flags or flags in ("AA", "DD"):
+            raise RuntimeError("the vault has unmerged paths")
+        elif "D" in flags:
+            dropped.add(rel)
+        elif rel.endswith(".md") and not any(part.startswith(".") for part in rel.split("/")) and is_generated(vault, rel):
+            found.add(rel)
+    return sorted(found - dropped)
 
 
 def commit_vault(vault: str, name: str, project: str) -> list[str]:
-    """Commit the vault's changed generated notes by named path (ADR 020). Returns the lines to print; never raises, never pushes."""
-    real = os.path.realpath(vault)
-    code, top = git(vault, "rev-parse", "--show-toplevel")
-    if code or os.path.realpath(top.strip()) != real:
+    """Commit the vault's changed generated notes by named path (ADR 020). Returns the lines to print and never pushes;
+    raises RuntimeError or OSError with the reason when it cannot go on, which main prints."""
+    code, where = git(vault, "rev-parse", "--show-toplevel", "--absolute-git-dir")
+    top, _, gitdir = where.partition("\n")
+    if code or not os.path.samefile(top, vault):
         return ["vault git: not committed (the vault is not a git repository of its own)"]
-    code, gitdir = git(vault, "rev-parse", "--absolute-git-dir")
-    if code:
-        return [f"vault git: not committed ({gitdir})"]
-    gitdir = gitdir.strip()
-    for marker, what in (("MERGE_HEAD", "a merge"), ("CHERRY_PICK_HEAD", "a cherry-pick"), ("REVERT_HEAD", "a revert"),
-                         ("rebase-merge", "a rebase"), ("rebase-apply", "a rebase"), ("index.lock", "another git command (index.lock)")):
+    if git(vault, "symbolic-ref", "-q", "HEAD")[0]:
+        return ["vault git: not committed (the vault's HEAD is detached)"]
+    for marker, what in (("MERGE_HEAD", "a merge"), ("rebase-merge", "a rebase"), ("rebase-apply", "a rebase"), ("index.lock", "another git command (index.lock)")):
         if os.path.exists(os.path.join(gitdir, marker)):
             return [f"vault git: not committed ({what} is in progress in the vault)"]
-    notes, unmerged = changed_generated_notes(vault)
-    if unmerged:
-        return ["vault git: not committed (the vault has unmerged paths)"]
+    notes = changed_generated_notes(vault)
     if not notes:
         return ["vault git: nothing to commit"]
     lines = []
     code, ahead = git(vault, "rev-list", "--count", "@{upstream}..HEAD")
-    ahead = ahead.strip()
     if code == 0 and ahead != "0":
         lines.append(f"vault git: the vault was already {ahead} commit(s) ahead of its remote, so do not push it (ADR 020)")
     elif code:
         lines.append("vault git: the vault has no upstream branch or no commit, so there is nothing to push it to")
-    code, short = git(project, "rev-parse", "--short", "HEAD")
-    message = f"Close {name} at {short.strip() if code == 0 else 'unknown'}: {len(notes)} generated note(s)"
+    short = vault_sync.git(project, "rev-parse", "--short", "HEAD").strip()
     code, out = git(vault, "add", "--", *notes)
     if code == 0:
-        code, out = git(vault, "commit", "--only", "-q", "-m", message, "--", *notes)
+        code, out = git(vault, "commit", "--only", "-q", "-m", f"Close {name} at {short}: {len(notes)} generated note(s)", "--", *notes)
     if code:
+        git(vault, "reset", "-q", "--", *notes)  # a refused commit must not leave the notes looking like the owner's staged changes
         return lines + [f"vault git: not committed ({out.splitlines()[0] if out else 'git failed'})"]
-    _, sha = git(vault, "rev-parse", "--short", "HEAD")
-    return lines + [f"vault git: committed {len(notes)} note(s) as {sha.strip()}"]
+    return lines + [f"vault git: committed {len(notes)} note(s) as {git(vault, 'rev-parse', '--short', 'HEAD')[1]}"]
 
 
 def lines_of(output: list[str], *prefixes: str) -> list[str]:
@@ -187,8 +184,11 @@ def main(argv: list[str]) -> int:
     elif errors:
         print("vault git: not committed (the lint has an error)")
     else:
-        for line in commit_vault(args.vault, name, args.project):
-            print(line)
+        try:
+            lines = commit_vault(args.vault, name, args.project)
+        except (OSError, RuntimeError) as error:
+            lines = [f"vault git: not committed ({error})"]
+        print(*lines, sep="\n")
     if errors:
         print("do not push: the lint has an error")
     return 1 if errors else 0

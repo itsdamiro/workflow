@@ -113,7 +113,7 @@ One procedure, run when a slice's work is done (`docs/sop/handoff.md`); it commi
 | propose captures, new notes and appended lines for the owner's side of the vault (ADR 017); written by `scripts/vault_write.py` only on the owner's yes | always | model proposes, owner approves, script writes |
 | draft `docs/HANDOFF.md` | always | model drafts, owner accepts |
 | check the handoff with a fresh reader and the six questions | full | fresh session or another model |
-| push the branch, and the vault when the close script committed to it and it was not already ahead of its remote, when the lint has no error | always | script and model |
+| push the branch, and the vault where ADR 020 allows, when the lint has no error | always | script and model |
 | report, short: what was pushed, what failed or was refused, the vault notes created and updated (by path; the close script lists them), what needs the owner | always | script and model |
 
 The stats line records the day, commit, commits since the last row, their first and last subject, and the context size at close, from the adapter (`adapters/claude/context-report/last_context.py` under Claude Code, ADR 015); `close_slice.py` runs it.
