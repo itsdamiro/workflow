@@ -116,3 +116,11 @@ The first run reports the missing concept notes and whatever the owner's hand-wr
 - **Not changed:** every other check, and the sync and stats scripts, which read the vault by their own walks. `Board/` stays gitignored and holds no notes; a stub in it is the owner's to remove or to stop Obsidian making, and the lint no longer fails on it.
 - **Accepted** by the owner on 2026-10-18, in chat ("fix it please, create the files if needed"), in answer to the proposal to skip `Board/` in the lint with an amendment first.
 - **Still open, not decided here:** `vault_sync.py`'s `names_elsewhere` also walks the whole vault, so a note named like a new project card, placed in `Board/`, would count as that name in use. Nothing is wrong today; it would be one more line in the same place if it ever bites.
+
+## Amendment (2026-10-20): a bare hex colour is not a tag to check
+
+- **Why:** the board app writes colour cards into a Moodboard note as plain text (`#1A2B3C Deep ink`), and Sympose, which edits the note's frontmatter, reads `#1A2B3C` as an inline tag and adds `1a2b3c` to `tags:`. The lint then failed the close with `bad-tag` for a colour, on one Moodboard note and on a project note that quotes a palette, and the close does not push while the lint has an error.
+- **Rule:** `bad-tag` skips a tag that is only 3, 6 or 8 hex digits, in either case (`fff`, `1a2b3c`, `1a2b3c4d`). A tag with a namespace (`topic/fff`), a `#`, or any other length or letter is checked as before.
+- **Cost, known:** a mistyped tag that happens to be only hex letters, such as `add`, `bad` or `face`, is no longer reported. A colour is far likelier in these notes than such a tag; the check is for the owner's own typos, which would also show in Sympose.
+- **Not changed:** every other check. A tag such as `roadtomd`, which is not a colour, is still an error; the tags the owner's notes already carry of that kind are the owner's to fix.
+- **Accepted** by the owner on 2026-10-20, in chat, as the way to settle the lint failure of the board app's close.

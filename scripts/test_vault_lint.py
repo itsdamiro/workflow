@@ -382,6 +382,14 @@ class Tagging(VaultCase):
         self.assertEqual(self.hits("bad-frontmatter", "A.md"), [])
         self.assertEqual(self.hits("no-tags", "A.md"), [])
 
+    def test_a_hex_colour_is_not_a_tag_to_check(self):
+        for colour in ("fff", "FC08FE", "1a2b3c", "1a2b3c4d"):
+            self.assertEqual(self.bad(f"[type/idea, status/draft, topic/mind, {colour}]"), [], colour)
+
+    def test_only_a_bare_hex_colour_of_3_6_or_8_digits_is_skipped(self):
+        for tag in ("ff", "abcd", "abcde", "abcdefa", "abcdef012", "ggg", "#fff", "Topic/fff", "roadtomd"):
+            self.assertEqual(len(self.bad(f"[{tag}]")), 1, tag)
+
     def test_a_scalar_tags_value_is_read_as_one_tag(self):
         self.assertEqual(len(self.bad("idea")), 1)
 

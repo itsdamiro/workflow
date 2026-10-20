@@ -30,6 +30,7 @@ TAG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*/[a-z0-9]+(?:-[a-z0-9]+)*$")
 KEY_LINE = re.compile(r"^([A-Za-z_][\w-]*):(?:\s+(.*))?$")
 NAMESPACE_LINE = re.compile(r"^[ \t]*[-*][ \t]+`([a-z0-9-]+)/`[ \t]*:[ \t]*(.*)$", re.M)
 LISTED_TOPIC = re.compile(r"`topic/([a-z0-9]+(?:-[a-z0-9]+)*)`")
+HEX_COLOUR = re.compile(r"^(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$")  # ADR 010, amendment of 2026-10-20
 CLOSED_NAMESPACES = ("type", "status")
 NEEDS_PROJECTS = {"decision", "idea", "pattern", "source", "capture"}
 NEEDS_TOPIC = {"decision", "concept", "pattern", "idea", "source"}
@@ -256,6 +257,8 @@ def check_fields(note: Note, tags: Tags) -> list[Finding]:
 def check_tags(note: Note, tags: Tags, projects: set[str]) -> list[Finding]:
     out = []
     for tag in tags_of(note):
+        if HEX_COLOUR.match(tag):
+            continue
         ns, _, value = tag.partition("/")
         if not TAG.match(tag):
             why = "is not lowercase kebab-case as namespace/value"
