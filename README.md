@@ -20,7 +20,7 @@ Three layers, outermost last. The system works with only the first two.
 |---|---|---|
 | Files and scripts | Markdown with YAML frontmatter; plain shell or Python standard library | any tool, or a human |
 | Procedures | `docs/sop/*.md`, steps any assistant can follow | any model |
-| Adapters | A few lines per tool that say "follow this procedure" (a Claude skill and mod, a Gemini command, ...) | one tool each, optional |
+| Adapters | A few lines per tool that say "follow this procedure" (a Claude skill, a Gemini command, ...) | one tool each, optional |
 
 ## Usage
 

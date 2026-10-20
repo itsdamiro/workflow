@@ -34,4 +34,4 @@ Only under Gemini CLI: read `docs/sop/handoff-gemini.md`; the Gemini command loa
 
 ## Adapters
 
-The Claude skill (`template/skills/handoff`, linked by `template/install.sh`), mod button or Gemini command (`template/commands/handoff.toml`, written by `template/install.sh` with this checkout's path filled in) each say: "follow `docs/sop/handoff.md`". Nothing more.
+The Claude skill (`template/skills/handoff`, linked by `template/install.sh`) or Gemini command (`template/commands/handoff.toml`, written by `template/install.sh` with this checkout's path filled in) each say: "follow `docs/sop/handoff.md`". Nothing more.

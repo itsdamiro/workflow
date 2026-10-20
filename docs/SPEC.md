@@ -32,7 +32,7 @@ Stop AI-assisted projects losing their thinking between sessions, keep long sess
 |---|---|---|
 | Files and scripts | Markdown, YAML frontmatter, shell or Python standard library | runs without any assistant |
 | Procedures | `docs/sop/*.md` | steps name capabilities ("read the diff", "run this script", "ask a fresh reader"), never one tool's verbs |
-| Adapters | a Claude skill and mod, a Gemini command, others | a few lines each: "follow `docs/sop/<name>.md`" |
+| Adapters | a Claude skill, a Gemini command, others | a few lines each: "follow `docs/sop/<name>.md`" |
 
 An adapter may add convenience (a reminder, a button). It may not add behaviour that the SOP does not describe.
 
@@ -133,6 +133,5 @@ Language-neutral. `gates.conf` is `name | directory | command`. SOPs avoid assum
 - Stylo uses a journal and a wiki, not `decisions/`: write an extractor or migrate it.
 - Is `governs:` worth its upkeep?
 - Does Sympose parse the chosen tag and list syntax? Test with sample notes before fixing the format.
-- Does the mod draw on the desktop app, and can it read tokens as well as a percent of the window?
 - Do structural tags add noise to Sympose's connections?
 - Sympose does not render image embeds yet (its `resolve-embed.tsx`: "asset serving isn't implemented on the backend"), so a Moodboard's `![[…png]]` shows as literal text there, as does raw inline HTML such as `<svg>` (Stylo's preview does not enable raw HTML). Obsidian and the board app draw them. Showing images in Sympose is a feature for Sympose's own repository (ADR 018, amendment of 2026-10-15).
