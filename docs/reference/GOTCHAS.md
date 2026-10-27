@@ -38,7 +38,17 @@
 - **Cause:** the press handler threw, the engine skipped that hook, and the app reports a skipped handler as "not handled". The engine's notes list other causes (no press site, a stale drawing, a key mismatch), which sent the first look at the load path and at redraws. Here the cause was `$.prompt.submit({ text: '/handoff' })`: the engine refuses a prompt that begins with `/`.
 - **Do this:** run a slash command with `$.command.run({ command, args })`. To tell a skipped handler from a stale drawing, press the button inside the plugin's own test (`claude plugin test <folder>`, with `$.ui.mount` and `press`), which prints the reason the hook was skipped; the app prints none. Hide a band only after the action has not thrown.
 
+### A mod loaded by `CLAUDE_CODE_PLUGIN_DIRS` does not show in a session that was already open
+- **Symptom:** a mod that validates and passes its tests is missing from another thread of the same app.
+- **Cause:** the variable is read from the user settings' `env` when a session starts, so a thread opened before the setting was written never loads the folder. A new thread does.
+- **Do this:** open a new session to check a mod, not the old one. Seen on 2026-10-27 with a status-line mod: a thread opened before the setting showed nothing, the next new thread showed it, so the desktop app does draw `$.ui.status`.
+
 ## 2. Recipes
+
+### Validate and test a mod from inside a session
+- **When:** `claude` is not on the session shell's PATH (the desktop app's shell), so `claude plugin validate <folder>` and `claude plugin test <folder>` report "command not found".
+- **Do this:** run the app's own copy, `claude.app/Contents/MacOS/claude` under the app support folder's `claude-code/<version>/<hash>/` (the sibling `claude-code-vm` one is Linux and fails with "exec format error"). `validate` passes with an icon warning that does not matter for a local mod.
+- **In a `*.test.ts`:** register every `on(...)` hook that stands for the engine before the first call on `$`; a second `on` after the test has used `$` throws, so a case that needs a second run is its own `test`.
 
 ### `strip()` on `git status --porcelain -z` corrupts the first path
 - **Symptom:** a script that reads git's status takes the first changed file for a different path, or drops it, only when that file is modified and unstaged.
